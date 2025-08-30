@@ -1,0 +1,105 @@
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#F8F9FA"
+    tools:context=".RideDetail_Activity">
+
+    <!-- Google Map Fragment -->
+    <fragment
+        android:id="@+id/map"
+        android:name="com.google.android.gms.maps.SupportMapFragment"
+        android:layout_width="match_parent"
+        android:layout_height="500dp" />
+
+    <!-- Ride Details Card -->
+    <LinearLayout
+        android:layout_below="@id/map"
+        android:orientation="vertical"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:padding="16dp"
+        android:elevation="10dp"
+        android:layout_margin="12dp"
+        android:clipToPadding="false"
+        android:clipToOutline="true"
+        android:backgroundTint="@android:color/white"
+        android:background="@drawable/bg_card">
+
+        <!-- Ride Status -->
+        <TextView
+            android:id="@+id/statusText"
+            android:text="🚖 Status: --"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            android:textColor="#212121"
+            android:padding="4dp"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content" />
+
+        <!-- Pickup -->
+        <TextView
+            android:id="@+id/pickupText"
+            android:text="📍 Pickup: --"
+            android:textSize="16sp"
+            android:textColor="#444"
+            android:paddingTop="8dp"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content" />
+
+        <!-- Destination -->
+        <TextView
+            android:id="@+id/destText"
+            android:text="🏁 Destination: --"
+            android:textSize="16sp"
+            android:textColor="#444"
+            android:paddingTop="4dp"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content" />
+
+        <!-- Fare -->
+        <TextView
+            android:id="@+id/fareText"
+            android:text="💰 Fare: --"
+            android:textSize="16sp"
+            android:textColor="#444"
+            android:paddingTop="8dp"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content" />
+
+        <!-- Driver Distance -->
+        <TextView
+            android:id="@+id/distanceText"
+            android:text="📏 Driver distance: --"
+            android:textSize="16sp"
+            android:textColor="#444"
+            android:paddingTop="4dp"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content" />
+
+        <Button
+            android:id="@+id/startRideBtn"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Start Ride"
+            android:backgroundTint="@color/colorPrimary"
+            android:textColor="@android:color/white"
+            android:textStyle="bold"
+            android:padding="12dp"
+            android:layout_marginTop="16dp"
+            android:visibility="gone"/> <!-- hidden by default -->
+
+        <Button
+            android:id="@+id/cancelRideBtn"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Cancel Ride"
+            android:visibility="gone"
+            android:layout_marginTop="10dp"/>
+
+    </LinearLayout>
+
+
+
+
+</RelativeLayout>
