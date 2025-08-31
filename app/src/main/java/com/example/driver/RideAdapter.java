@@ -1,6 +1,7 @@
 package com.example.driver;
 
 import android.content.Context;
+import android.text.Html;
 import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -35,18 +36,20 @@ public class RideAdapter extends RecyclerView.Adapter<RideAdapter.RideViewHolder
         HistoryRideModel r = rides.get(position);
 
         // Pickup & Drop
-        holder.tvPickup.setText("📍 From: " + safe(r.getPickupName()));
-        holder.tvDrop.setText("🎯 To: " + safe(r.getDrop()));
+        holder.tvPickup.setText(Html.fromHtml("<b>From:</b> " + safe(r.getPickupName())));
+        holder.tvDrop.setText(Html.fromHtml("<b>To:</b> " + safe(r.getDrop())));
+
+        holder.tvStartEndTimes.setText(Html.fromHtml("<b>To:</b> " + safe(r.getStartTime())));
 
         // Booking Date + Time
-        String dateTime = (safe(r.getBookingDate()) + (TextUtils.isEmpty(r.getBookingTime()) ? "" : "  " + r.getBookingTime())).trim();
+        String dateTime = (safe(r.getBookingDate()) +
+                (TextUtils.isEmpty(r.getBookingTime()) ? "" : "  " + r.getBookingTime())).trim();
         holder.tvDateTime.setText(!TextUtils.isEmpty(dateTime) ? dateTime : "—");
 
         // Price
         holder.tvPrice.setText(safe(r.getPrice()));
 
         // Vehicle type
-        holder.tvType.setText(safe(r.getVehicle()));
 
         // Status
         String status = safe(r.getStatus()).toLowerCase();
@@ -70,9 +73,10 @@ public class RideAdapter extends RecyclerView.Adapter<RideAdapter.RideViewHolder
         holder.tvStatus.setTextColor(ContextCompat.getColor(context, colorRes));
 
         // Optional: show driver accept/start/end times
-        holder.tvStartEndTimes.setText("🚦 Start: " + safe(r.getStartTime()) + " | ⏹ End: " + safe(r.getEndTime()));
+        holder.tvStartEndTimes.setText("🚦 Start: " + safe(r.getStartTime()) +
+                " | ⏹ End: " + safe(r.getEndTime()));
 
-        // Item click: you can open ride details if needed
+        // Item click
         holder.itemView.setOnClickListener(v -> {
             // handle click if needed
         });
@@ -93,9 +97,7 @@ public class RideAdapter extends RecyclerView.Adapter<RideAdapter.RideViewHolder
             tvDateTime = itemView.findViewById(R.id.tvDateTime);
             tvPrice = itemView.findViewById(R.id.tvPrice);
             tvStatus = itemView.findViewById(R.id.tvStatus);
-            tvType = itemView.findViewById(R.id.tvType);
 
-            // Add new TextView in layout to show start/end times
             tvStartEndTimes = itemView.findViewById(R.id.tvStartEndTimes);
         }
     }

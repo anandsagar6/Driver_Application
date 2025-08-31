@@ -20,20 +20,29 @@
             android:id="@+id/tvPickup"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Pickup name"
-            android:textSize="16sp"
+            android:layout_weight="1"
+            android:singleLine="true"
+            android:scrollHorizontally="false"
+            android:marqueeRepeatLimit="marquee_forever"
+            android:text="Pickup Location"
             android:textColor="@color/black"
-            android:textStyle="bold"/>
+            android:textSize="14sp"
+            android:ellipsize="end"
+            android:maxLines="1"/>
 
         <TextView
             android:id="@+id/tvDrop"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Drop"
-            android:textColor="@color/black"
-            android:textSize="16sp"
-            android:textStyle="bold"
-            android:layout_marginTop="2dp"/>
+            android:text="To: Drop Location"
+            android:textColor="#000000"
+            android:textSize="14sp"
+            android:singleLine="true"
+            android:scrollHorizontally="true"
+            android:ellipsize="marquee"
+            android:marqueeRepeatLimit="marquee_forever"
+            android:focusable="true"
+            android:focusableInTouchMode="true"/>
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -60,16 +69,7 @@
                 android:text="23-Aug-2025 11:49 PM"
                 android:textSize="13sp"/>
 
-            <TextView
-                android:id="@+id/tvStartEndTimes"
-                android:layout_width="0dp"
-                android:layout_weight="2"
-                android:textColor="@color/black"
-                android:layout_marginLeft="4dp"
-                android:layout_marginTop="2dp"
-                android:layout_height="wrap_content"
-                android:text="23-Aug-2025 11:49 PM"
-                android:textSize="13sp"/>
+
 
             <TextView
                 android:id="@+id/tvPrice"
@@ -89,14 +89,21 @@
             android:layout_marginTop="6dp"
             android:weightSum="2">
 
+
             <TextView
-                android:id="@+id/tvType"
+                android:id="@+id/tvStartEndTimes"
                 android:layout_width="0dp"
                 android:layout_weight="1"
-                android:layout_height="wrap_content"
-                android:text="premium"
                 android:textColor="@color/black"
-                android:textSize="14sp"/>
+                android:layout_marginLeft="4dp"
+                android:layout_marginTop="2dp"
+                android:gravity="left"
+                android:layout_gravity="left"
+                android:layout_height="wrap_content"
+                android:text="23-Aug-2025 11:49 PM"
+                android:textSize="13sp"/>
+
+
 
             <TextView
                 android:id="@+id/tvStatus"
@@ -106,6 +113,8 @@
                 android:text="waiting"
                 android:gravity="end"
                 android:textSize="14sp"/>
+
+
 
 
         </LinearLayout>

@@ -1,6 +1,7 @@
 package com.example.driver;
 
 import android.os.Bundle;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -33,7 +34,7 @@ public class Activity_Fragment extends Fragment {
     private RecyclerView rideRecyclerView;
 
     private RideAdapter adapter;
-    private List<HistoryRideModel> rideList = new ArrayList<>();
+    private final List<HistoryRideModel> rideList = new ArrayList<>();
     private DatabaseReference ridesRef;
 
     public Activity_Fragment() { }
@@ -49,7 +50,7 @@ public class Activity_Fragment extends Fragment {
         swipeRefresh = root.findViewById(R.id.swipeRefresh);
         rideRecyclerView = root.findViewById(R.id.rideRecyclerView);
 
-        adapter = new RideAdapter(getContext(), rideList);
+        adapter = new RideAdapter(requireContext(), rideList);
         rideRecyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
         rideRecyclerView.setAdapter(adapter);
 
@@ -85,10 +86,15 @@ public class Activity_Fragment extends Fragment {
             public void onDataChange(@NonNull DataSnapshot snapshot) {
                 rideList.clear();
 
+                if (!snapshot.exists()) {
+                    Log.d("Activity_Fragment", "No rides found for driverId=" + driverId);
+                }
+
                 for (DataSnapshot rideSnap : snapshot.getChildren()) {
+                    Log.d("Activity_Fragment", "Ride snapshot: " + rideSnap.getValue());
+
                     HistoryRideModel ride = rideSnap.getValue(HistoryRideModel.class);
                     if (ride != null) {
-                        // Ensure rideId is set
                         if (ride.getRideId() == null || ride.getRideId().isEmpty()) {
                             ride.setRideId(rideSnap.getKey());
                         }
@@ -98,6 +104,7 @@ public class Activity_Fragment extends Fragment {
 
                 Collections.reverse(rideList); // latest first
                 adapter.notifyDataSetChanged();
+
                 progressBar.setVisibility(View.GONE);
                 swipeRefresh.setRefreshing(false);
 
@@ -115,8 +122,9 @@ public class Activity_Fragment extends Fragment {
             public void onCancelled(@NonNull DatabaseError error) {
                 progressBar.setVisibility(View.GONE);
                 swipeRefresh.setRefreshing(false);
-                emptyText.setText("Failed to load rides");
+                emptyText.setText("Failed to load rides: " + error.getMessage());
                 emptyText.setVisibility(View.VISIBLE);
+                Log.e("Activity_Fragment", "Firebase error: " + error.getMessage());
             }
         });
     }
