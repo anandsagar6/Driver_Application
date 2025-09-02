@@ -53,16 +53,13 @@ public class UserRequest_Fragment extends Fragment implements OnMapReadyCallback
     FusedLocationProviderClient fusedLocationProviderClient;
     LocationCallback locationCallback;
 
-    // Map
     private GoogleMap mMap;
 
     // Ride info
     Double pickupLat, pickupLng, destLat, destLng;
     String pickupName, dropName, rideType, price;
 
-    public UserRequest_Fragment() {
-        // Required empty public constructor
-    }
+    public UserRequest_Fragment() { }
 
     @Nullable
     @Override
@@ -73,9 +70,7 @@ public class UserRequest_Fragment extends Fragment implements OnMapReadyCallback
         // Firebase Auth
         auth = FirebaseAuth.getInstance();
         FirebaseUser driver = auth.getCurrentUser();
-
         if (driver == null) {
-            // redirect to login if needed
             startActivity(new Intent(getActivity(), Login_Activity.class));
             requireActivity().finish();
             return view;
@@ -86,7 +81,6 @@ public class UserRequest_Fragment extends Fragment implements OnMapReadyCallback
         driversRef = FirebaseDatabase.getInstance().getReference("drivers").child(currentDriverId);
 
         // Bind UI
-
         btnAccept = view.findViewById(R.id.btnAccept);
         btnReject = view.findViewById(R.id.btnReject);
         tvRideType = view.findViewById(R.id.tvRideType);
@@ -104,7 +98,6 @@ public class UserRequest_Fragment extends Fragment implements OnMapReadyCallback
             mapFragment.getMapAsync(this);
         }
 
-        // Start location updates
         startLocationUpdates();
 
         // Listen for waiting rides
@@ -114,7 +107,7 @@ public class UserRequest_Fragment extends Fragment implements OnMapReadyCallback
                     public void onDataChange(@NonNull DataSnapshot snapshot) {
                         if (snapshot.exists()) {
                             for (DataSnapshot rideSnap : snapshot.getChildren()) {
-                                currentRideId = rideSnap.getKey(); // Firebase key of the ride
+                                currentRideId = rideSnap.getKey();
 
                                 rideType = rideSnap.child("rideType").getValue(String.class);
                                 pickupLat = rideSnap.child("pickupLat").getValue(Double.class);
@@ -126,8 +119,8 @@ public class UserRequest_Fragment extends Fragment implements OnMapReadyCallback
                                 dropName = rideSnap.child("Drop").getValue(String.class);
 
                                 tvRideType.setText("Ride Type: " + (rideType != null ? rideType : "N/A"));
-                                tvPickup.setText("Pickup: " + (pickupName != null ? pickupName : pickupLat + ", " + pickupLng));
-                                tvDestination.setText("Destination: " + (dropName != null ? dropName : destLat + ", " + destLng));
+                                tvPickup.setText("Pickup: " + (pickupName != null ? pickupName : (pickupLat + ", " + pickupLng)));
+                                tvDestination.setText("Destination: " + (dropName != null ? dropName : (destLat + ", " + destLng)));
                                 tvPrice.setText("Price: " + (price != null ? price : "N/A"));
 
                                 updateDistanceWithLastLocation();
@@ -170,8 +163,6 @@ public class UserRequest_Fragment extends Fragment implements OnMapReadyCallback
                 Toast.makeText(getContext(), "Ride Rejected", Toast.LENGTH_SHORT).show();
             }
         });
-
-
 
         return view;
     }
@@ -219,7 +210,6 @@ public class UserRequest_Fragment extends Fragment implements OnMapReadyCallback
                                     String.format("%.2f", distanceInKm) + " km");
                         }
 
-                        // Update map markers
                         showMarkersOnMap();
                     }
                 }
@@ -267,7 +257,6 @@ public class UserRequest_Fragment extends Fragment implements OnMapReadyCallback
 
     private void showMarkersOnMap() {
         if (mMap == null) return;
-        mMap.clear();
 
         LatLng driverLoc = null;
         if (ActivityCompat.checkSelfPermission(requireContext(),
@@ -286,6 +275,8 @@ public class UserRequest_Fragment extends Fragment implements OnMapReadyCallback
         LatLng pickup = (pickupLat != null && pickupLng != null) ? new LatLng(pickupLat, pickupLng) : null;
         LatLng dest = (destLat != null && destLng != null) ? new LatLng(destLat, destLng) : null;
 
+        mMap.clear();
+
         if (pickup != null)
             mMap.addMarker(new MarkerOptions().position(pickup).title("Pickup: " + (pickupName != null ? pickupName : "")));
         if (dest != null)
@@ -294,22 +285,17 @@ public class UserRequest_Fragment extends Fragment implements OnMapReadyCallback
             mMap.addMarker(new MarkerOptions().position(driverLoc).title("Driver (You)"));
 
         PolylineOptions polylineOptions = new PolylineOptions().color(Color.BLUE).width(8f);
-        if (driverLoc != null && pickup != null) {
-            polylineOptions.add(driverLoc, pickup);
-        }
-        if (pickup != null && dest != null) {
-            polylineOptions.add(pickup, dest);
-        }
-        if (polylineOptions.getPoints().size() > 1) {
-            mMap.addPolyline(polylineOptions);
-        }
+        if (driverLoc != null && pickup != null) polylineOptions.add(driverLoc, pickup);
+        if (pickup != null && dest != null) polylineOptions.add(pickup, dest);
+        if (polylineOptions.getPoints().size() > 1) mMap.addPolyline(polylineOptions);
 
         LatLngBounds.Builder builder = new LatLngBounds.Builder();
-        if (driverLoc != null) builder.include(driverLoc);
-        if (pickup != null) builder.include(pickup);
-        if (dest != null) builder.include(dest);
+        boolean hasPoint = false;
+        if (driverLoc != null) { builder.include(driverLoc); hasPoint = true; }
+        if (pickup != null) { builder.include(pickup); hasPoint = true; }
+        if (dest != null) { builder.include(dest); hasPoint = true; }
 
-        if ((driverLoc != null) || (pickup != null) || (dest != null)) {
+        if (hasPoint) {
             mMap.animateCamera(CameraUpdateFactory.newLatLngBounds(builder.build(), 120));
         }
     }

@@ -64,22 +64,14 @@ public class Signup_Activity extends AppCompatActivity {
         vehicleSpinner.setAdapter(adapter);
 
         // Sign Up
-        signupBtn.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                registerDriver();
-            }
-        });
+        signupBtn.setOnClickListener(v -> registerDriver());
 
         // Redirect to Login
-        loginRedirectBtn.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Intent intent = new Intent(Signup_Activity.this, Login_Activity.class);
-                startActivity(intent);
-                overridePendingTransition(R.anim.slide_in_left, R.anim.slide_out_right);
-                finish();
-            }
+        loginRedirectBtn.setOnClickListener(v -> {
+            Intent intent = new Intent(Signup_Activity.this, Login_Activity.class);
+            startActivity(intent);
+            overridePendingTransition(R.anim.slide_in_left, R.anim.slide_out_right);
+            finish();
         });
     }
 
@@ -120,27 +112,44 @@ public class Signup_Activity extends AppCompatActivity {
 
         // Firebase Auth
         auth.createUserWithEmailAndPassword(email, password)
-                .addOnCompleteListener(Signup_Activity.this, new OnCompleteListener<AuthResult>() {
-                    @Override
-                    public void onComplete(@NonNull Task<AuthResult> task) {
-                        if (task.isSuccessful()) {
-                            String uid = auth.getCurrentUser().getUid();
-                            HashMap<String, String> driverMap = new HashMap<>();
-                            driverMap.put("fullName", fullName);
-                            driverMap.put("vehicleNumber", vehicleNumber);
-                            driverMap.put("phone", phone);
-                            driverMap.put("dlNumber", dlNumber);
-                            driverMap.put("email", email);
-                            driverMap.put("vehicleType", vehicle);
+                .addOnCompleteListener(Signup_Activity.this, task -> {
+                    if (task.isSuccessful()) {
+                        String uid = auth.getCurrentUser().getUid();
 
-                            driverRef.child(uid).setValue(driverMap);
+                        // Driver static info
+                        HashMap<String, Object> driverInfo = new HashMap<>();
+                        driverInfo.put("fullName", fullName);
+                        driverInfo.put("vehicleNumber", vehicleNumber);
+                        driverInfo.put("phone", phone);
+                        driverInfo.put("dlNumber", dlNumber);
+                        driverInfo.put("email", email);
+                        driverInfo.put("vehicleType", vehicle);
 
-                            startActivity(new Intent(Signup_Activity.this, Login_Activity.class));
-                            overridePendingTransition(R.anim.slide_in_left, R.anim.slide_out_right);
-                            finish();
-                        } else {
-                            emailInput.setError("Signup failed: " + task.getException().getMessage());
-                        }
+                        // Driver dynamic info
+                        HashMap<String, Object> driverStatus = new HashMap<>();
+                        driverStatus.put("currentLat", 0);
+                        driverStatus.put("currentLng", 0);
+                        driverStatus.put("status", "available");
+
+                        // Combine under structured node
+                        HashMap<String, Object> driverData = new HashMap<>();
+                        driverData.put("info", driverInfo);
+                        driverData.put("status", driverStatus);
+
+                        // Save in Firebase
+                        driverRef.child(uid).updateChildren(driverData)
+                                .addOnCompleteListener(task1 -> {
+                                    if (task1.isSuccessful()) {
+                                        startActivity(new Intent(Signup_Activity.this, Login_Activity.class));
+                                        overridePendingTransition(R.anim.slide_in_left, R.anim.slide_out_right);
+                                        finish();
+                                    } else {
+                                        emailInput.setError("Signup failed: " + task1.getException().getMessage());
+                                    }
+                                });
+
+                    } else {
+                        emailInput.setError("Signup failed: " + task.getException().getMessage());
                     }
                 });
     }
