@@ -42,7 +42,7 @@ import com.google.firebase.database.ValueEventListener;
 
 public class UserRequest_Fragment extends Fragment implements OnMapReadyCallback {
 
-    Button btnLogout, btnAccept, btnReject;
+    Button btnAccept, btnReject;
     TextView tvRideType, tvPickup, tvDestination, tvPrice, tvDistance;
 
     FirebaseAuth auth;
@@ -86,7 +86,7 @@ public class UserRequest_Fragment extends Fragment implements OnMapReadyCallback
         driversRef = FirebaseDatabase.getInstance().getReference("drivers").child(currentDriverId);
 
         // Bind UI
-        btnLogout = view.findViewById(R.id.btnLogout);
+
         btnAccept = view.findViewById(R.id.btnAccept);
         btnReject = view.findViewById(R.id.btnReject);
         tvRideType = view.findViewById(R.id.tvRideType);
@@ -171,14 +171,7 @@ public class UserRequest_Fragment extends Fragment implements OnMapReadyCallback
             }
         });
 
-        // Logout
-        btnLogout.setOnClickListener(v -> {
-            auth.signOut();
-            Intent intent = new Intent(getActivity(), Login_Activity.class);
-            intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
-            startActivity(intent);
-            requireActivity().finish();
-        });
+
 
         return view;
     }

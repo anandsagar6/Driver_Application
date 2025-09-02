@@ -2,31 +2,49 @@ package com.example.driver;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.text.TextUtils;
 import android.util.Patterns;
-import android.widget.*;
+import android.view.View;
+import android.widget.ArrayAdapter;
+import android.widget.Button;
+import android.widget.EditText;
+import android.widget.Spinner;
+import android.widget.TextView;
+
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.Task;
+import com.google.firebase.auth.AuthResult;
 import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.database.*;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
 
 import java.util.HashMap;
 
 public class Signup_Activity extends AppCompatActivity {
 
-    EditText firstNameInput, lastNameInput, phoneInput, dlNumberInput, emailInput, passwordInput;
-    Spinner vehicleSpinner;
-    Button signupBtn, loginRedirectBtn;
-    FirebaseAuth auth;
-    DatabaseReference driversRef;
+    private EditText fullNameInput, vehicleNumberInput, phoneInput, dlNumberInput, emailInput, passwordInput;
+    private Spinner vehicleSpinner;
+    private Button signupBtn;
+    TextView loginRedirectBtn;
+
+    private FirebaseAuth auth;
+    private DatabaseReference driverRef;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_signup);
 
-        // Initialize inputs
-        firstNameInput = findViewById(R.id.firstNameInput);
-        lastNameInput = findViewById(R.id.lastNameInput);
+        // Firebase init
+        auth = FirebaseAuth.getInstance();
+        driverRef = FirebaseDatabase.getInstance().getReference("drivers");
+
+        // Views
+        fullNameInput = findViewById(R.id.fullNameInput);
+        vehicleNumberInput = findViewById(R.id.vehicleNumberInput);
         phoneInput = findViewById(R.id.phoneInput);
         dlNumberInput = findViewById(R.id.dlNumberInput);
         emailInput = findViewById(R.id.emailInput);
@@ -35,100 +53,95 @@ public class Signup_Activity extends AppCompatActivity {
         signupBtn = findViewById(R.id.signupBtn);
         loginRedirectBtn = findViewById(R.id.loginRedirectBtn);
 
-        auth = FirebaseAuth.getInstance();
-        driversRef = FirebaseDatabase.getInstance().getReference("drivers");
-
-        // ✅ Setup Spinner values
+        // Spinner setup
         String[] vehicleTypes = {"SUV", "Sedan", "Auto"};
-        ArrayAdapter<String> adapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, vehicleTypes);
-        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        ArrayAdapter<String> adapter = new ArrayAdapter<>(
+                this,
+                R.layout.spinner_item,
+                vehicleTypes
+        );
+        adapter.setDropDownViewResource(R.layout.spinner_dropdown_item);
         vehicleSpinner.setAdapter(adapter);
 
-        signupBtn.setOnClickListener(v -> {
-            String firstName = firstNameInput.getText().toString().trim();
-            String lastName = lastNameInput.getText().toString().trim();
-            String phone = phoneInput.getText().toString().trim();
-            String vehicle = vehicleSpinner.getSelectedItem().toString();
-            String dlNumber = dlNumberInput.getText().toString().trim();
-            String email = emailInput.getText().toString().trim();
-            String password = passwordInput.getText().toString().trim();
-
-            // ✅ Validations
-            if (firstName.isEmpty() || lastName.isEmpty() || phone.isEmpty() || vehicle.isEmpty() ||
-                    dlNumber.isEmpty() || email.isEmpty() || password.isEmpty()) {
-                Toast.makeText(this, "Fill all fields", Toast.LENGTH_SHORT).show();
-                return;
+        // Sign Up
+        signupBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                registerDriver();
             }
-
-            if (phone.length() != 10 || !phone.matches("\\d{10}")) {
-                Toast.makeText(this, "Enter valid 10-digit phone number", Toast.LENGTH_SHORT).show();
-                return;
-            }
-
-            if (!Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
-                Toast.makeText(this, "Enter valid email", Toast.LENGTH_SHORT).show();
-                return;
-            }
-
-            if (password.length() < 6) {
-                Toast.makeText(this, "Password must be at least 6 characters", Toast.LENGTH_SHORT).show();
-                return;
-            }
-
-            // ✅ Create user
-            auth.createUserWithEmailAndPassword(email, password).addOnCompleteListener(task -> {
-                if (task.isSuccessful()) {
-                    String firebaseUid = auth.getCurrentUser().getUid();
-
-                    // Save driver info in DB (❌ removed driverId)
-                    HashMap<String, Object> driverMap = new HashMap<>();
-                    driverMap.put("firstName", firstName);
-                    driverMap.put("lastName", lastName);
-                    driverMap.put("phone", phone);
-                    driverMap.put("vehicle", vehicle);
-                    driverMap.put("dlNumber", dlNumber);
-                    driverMap.put("email", email);
-                    driverMap.put("status", "offline");
-
-                    driversRef.child(firebaseUid).setValue(driverMap).addOnCompleteListener(dbTask -> {
-                        if (dbTask.isSuccessful()) {
-                            setDriverOnlineStatus(firebaseUid);
-                            Toast.makeText(this, "Driver Registered ✅", Toast.LENGTH_SHORT).show();
-                            startActivity(new Intent(this, Login_Activity.class));
-                            finish();
-                        } else {
-                            Toast.makeText(this, "DB Error: " + dbTask.getException().getMessage(), Toast.LENGTH_SHORT).show();
-                        }
-                    });
-                } else {
-                    Toast.makeText(this, "Auth Error: " + task.getException().getMessage(), Toast.LENGTH_SHORT).show();
-                }
-            });
         });
 
-        loginRedirectBtn.setOnClickListener(v -> {
-            startActivity(new Intent(this, Login_Activity.class));
-            finish();
+        // Redirect to Login
+        loginRedirectBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent intent = new Intent(Signup_Activity.this, Login_Activity.class);
+                startActivity(intent);
+                overridePendingTransition(R.anim.slide_in_left, R.anim.slide_out_right);
+                finish();
+            }
         });
     }
 
-    // ✅ Function to set online/offline status
-    private void setDriverOnlineStatus(String driverId) {
-        DatabaseReference statusRef = driversRef.child(driverId).child("status");
+    private void registerDriver() {
+        String fullName = fullNameInput.getText().toString().trim();
+        String vehicleNumber = vehicleNumberInput.getText().toString().trim();
+        String phone = phoneInput.getText().toString().trim();
+        String dlNumber = dlNumberInput.getText().toString().trim();
+        String email = emailInput.getText().toString().trim();
+        String password = passwordInput.getText().toString().trim();
+        String vehicle = vehicleSpinner.getSelectedItem().toString();
 
-        DatabaseReference connectedRef = FirebaseDatabase.getInstance().getReference(".info/connected");
-        connectedRef.addValueEventListener(new ValueEventListener() {
-            @Override
-            public void onDataChange(DataSnapshot snapshot) {
-                Boolean connected = snapshot.getValue(Boolean.class);
-                if (Boolean.TRUE.equals(connected)) {
-                    statusRef.setValue("online");
-                    statusRef.onDisconnect().setValue("offline");
-                }
-            }
+        // Validation
+        if (TextUtils.isEmpty(fullName)) {
+            fullNameInput.setError("Full name required");
+            return;
+        }
+        if (TextUtils.isEmpty(vehicleNumber)) {
+            vehicleNumberInput.setError("Vehicle number required");
+            return;
+        }
+        if (phone.length() != 10) {
+            phoneInput.setError("Enter valid 10 digit number");
+            return;
+        }
+        if (TextUtils.isEmpty(dlNumber)) {
+            dlNumberInput.setError("DL number required");
+            return;
+        }
+        if (!Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
+            emailInput.setError("Enter valid email");
+            return;
+        }
+        if (password.length() < 6) {
+            passwordInput.setError("Password must be at least 6 chars");
+            return;
+        }
 
-            @Override
-            public void onCancelled(DatabaseError error) {}
-        });
+        // Firebase Auth
+        auth.createUserWithEmailAndPassword(email, password)
+                .addOnCompleteListener(Signup_Activity.this, new OnCompleteListener<AuthResult>() {
+                    @Override
+                    public void onComplete(@NonNull Task<AuthResult> task) {
+                        if (task.isSuccessful()) {
+                            String uid = auth.getCurrentUser().getUid();
+                            HashMap<String, String> driverMap = new HashMap<>();
+                            driverMap.put("fullName", fullName);
+                            driverMap.put("vehicleNumber", vehicleNumber);
+                            driverMap.put("phone", phone);
+                            driverMap.put("dlNumber", dlNumber);
+                            driverMap.put("email", email);
+                            driverMap.put("vehicleType", vehicle);
+
+                            driverRef.child(uid).setValue(driverMap);
+
+                            startActivity(new Intent(Signup_Activity.this, Login_Activity.class));
+                            overridePendingTransition(R.anim.slide_in_left, R.anim.slide_out_right);
+                            finish();
+                        } else {
+                            emailInput.setError("Signup failed: " + task.getException().getMessage());
+                        }
+                    }
+                });
     }
 }

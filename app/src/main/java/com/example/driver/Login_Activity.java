@@ -4,6 +4,7 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
@@ -13,8 +14,9 @@ import com.google.firebase.auth.FirebaseAuth;
 public class Login_Activity extends AppCompatActivity {
 
     EditText emailInput, passwordInput;
-    Button loginBtn, signupRedirectBtn;
+    Button loginBtn;
     FirebaseAuth auth;
+    TextView signupRedirectBtn;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -49,8 +51,11 @@ public class Login_Activity extends AppCompatActivity {
                     });
         });
 
+
         signupRedirectBtn.setOnClickListener(v -> {
-            startActivity(new Intent(this, Signup_Activity.class));
+            Intent intent = new Intent(Login_Activity.this, Signup_Activity.class);
+            startActivity(intent);
+            overridePendingTransition(R.anim.slide_in_right, R.anim.slide_out_left);
             finish();
         });
     }

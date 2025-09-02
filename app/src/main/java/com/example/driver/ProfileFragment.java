@@ -1,87 +1,85 @@
 package com.example.driver;
 
-import android.annotation.SuppressLint;
 import android.content.Intent;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
-import android.widget.Toast;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 
+import com.example.driver.Login_Activity;
+import com.example.driver.MainActivity;
+import com.example.driver.R;
+import com.google.firebase.auth.FirebaseAuth;
 
 public class ProfileFragment extends Fragment {
-    Button backToDash,account, personal_info,review,notification,fingerPrint;
 
+    private FirebaseAuth auth;
+    private Button btnAccount, btnInfo, btnReview, btnNotification, btnFingerprint, btnBack, btnLogout;
 
-    public ProfileFragment() {
-        // Required empty public constructor
-    }
-
-
-    @SuppressLint("MissingInflatedId")
+    @Nullable
     @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container,
-                             Bundle savedInstanceState) {
+    public View onCreateView(@NonNull LayoutInflater inflater,
+                             @Nullable ViewGroup container,
+                             @Nullable Bundle savedInstanceState) {
+
         View view = inflater.inflate(R.layout.fragment_profile, container, false);
 
-        backToDash=view.findViewById(R.id.profiletodashboard);
-        account=view.findViewById(R.id.account_setting);
-        review=view.findViewById(R.id.review);
-        notification=view.findViewById(R.id.notification);
-        fingerPrint=view.findViewById(R.id.finger_print);
-        personal_info =view.findViewById(R.id.profile_info);
+        auth = FirebaseAuth.getInstance();
 
+        // Initialize buttons
+        btnAccount = view.findViewById(R.id.account_setting);
+        btnInfo = view.findViewById(R.id.profile_info);
+        btnReview = view.findViewById(R.id.review);
+        btnNotification = view.findViewById(R.id.notification);
+        btnFingerprint = view.findViewById(R.id.finger_print);
+        btnBack = view.findViewById(R.id.profiletodashboard);
+        btnLogout = view.findViewById(R.id.logoutBtn);
 
-        notification.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Toast.makeText(getContext(), "Notification", Toast.LENGTH_SHORT).show();
-            }
-        });
-        review.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Toast.makeText(getContext(), "My Review", Toast.LENGTH_SHORT).show();
-            }
-        });
-        fingerPrint.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Toast.makeText(getContext(), "Finger Print setting", Toast.LENGTH_SHORT).show();
-
-            }
+        // Account settings
+        btnAccount.setOnClickListener(v -> {
+            // TODO: Open Account Settings Activity
         });
 
-
-        personal_info.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Toast.makeText(getContext(), "Personal info", Toast.LENGTH_SHORT).show();
-            }
+        // Profile Info
+        btnInfo.setOnClickListener(v -> {
+            // TODO: Open Profile Info Activity
         });
 
-        account.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Toast.makeText(getContext(), "Account Setting", Toast.LENGTH_SHORT).show();
-
-
-            }
+        // Review
+        btnReview.setOnClickListener(v -> {
+            // TODO: Open Review Page
         });
 
-
-        backToDash.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Intent intent =new Intent(getActivity(), DashBoard.class);
-                startActivity(intent);
-            }
+        // Notification
+        btnNotification.setOnClickListener(v -> {
+            // TODO: Open Notification Page
         });
 
-        // Inflate the layout for this fragment
+        // Fingerprint
+        btnFingerprint.setOnClickListener(v -> {
+            // TODO: Enable fingerprint settings
+        });
+
+        // Back to Dashboard
+        btnBack.setOnClickListener(v -> {
+            Intent intent = new Intent(getActivity(), DashBoard.class);
+            startActivity(intent);
+        });
+
+        // Logout
+        btnLogout.setOnClickListener(v -> {
+            auth.signOut();
+            Intent intent = new Intent(getActivity(), Login_Activity.class);
+            intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
+            startActivity(intent);
+            requireActivity().finish();
+        });
+
         return view;
     }
 }
