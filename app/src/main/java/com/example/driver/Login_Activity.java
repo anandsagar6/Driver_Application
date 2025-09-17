@@ -2,8 +2,11 @@ package com.example.driver;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.text.method.HideReturnsTransformationMethod;
+import android.text.method.PasswordTransformationMethod;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -17,6 +20,8 @@ public class Login_Activity extends AppCompatActivity {
     Button loginBtn;
     FirebaseAuth auth;
     TextView signupRedirectBtn;
+    ImageView showPasswordBtn;
+    boolean isPasswordVisible = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -27,21 +32,41 @@ public class Login_Activity extends AppCompatActivity {
         passwordInput = findViewById(R.id.passwordInput);
         loginBtn = findViewById(R.id.loginBtn);
         signupRedirectBtn = findViewById(R.id.signupRedirectBtn);
+        showPasswordBtn = findViewById(R.id.showPasswordBtn);
 
         auth = FirebaseAuth.getInstance();
 
+        // 👁️ Toggle password visibility
+        showPasswordBtn.setOnClickListener(v -> {
+            if (isPasswordVisible) {
+                // Hide Password
+                passwordInput.setTransformationMethod(PasswordTransformationMethod.getInstance());
+                showPasswordBtn.setImageResource(R.drawable.eye_closed);
+                isPasswordVisible = false;
+            } else {
+                // Show Password
+                passwordInput.setTransformationMethod(HideReturnsTransformationMethod.getInstance());
+                showPasswordBtn.setImageResource(R.drawable.eye_open);
+                isPasswordVisible = true;
+            }
+
+            // Move cursor to end of text
+            passwordInput.setSelection(passwordInput.getText().length());
+        });
+
+        // 🔑 Login button
         loginBtn.setOnClickListener(v -> {
             String email = emailInput.getText().toString().trim();
             String password = passwordInput.getText().toString().trim();
 
-            if(email.isEmpty() || password.isEmpty()){
+            if (email.isEmpty() || password.isEmpty()) {
                 Toast.makeText(this, "Enter all fields", Toast.LENGTH_SHORT).show();
                 return;
             }
 
             auth.signInWithEmailAndPassword(email, password)
                     .addOnCompleteListener(task -> {
-                        if(task.isSuccessful()){
+                        if (task.isSuccessful()) {
                             Toast.makeText(this, "Login Successful ✅", Toast.LENGTH_SHORT).show();
                             startActivity(new Intent(this, DashBoard.class));
                             finish();
@@ -51,7 +76,7 @@ public class Login_Activity extends AppCompatActivity {
                     });
         });
 
-
+        // 🔄 Signup redirect
         signupRedirectBtn.setOnClickListener(v -> {
             Intent intent = new Intent(Login_Activity.this, Signup_Activity.class);
             startActivity(intent);

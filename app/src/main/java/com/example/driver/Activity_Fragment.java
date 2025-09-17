@@ -62,7 +62,9 @@ public class Activity_Fragment extends Fragment {
     }
 
     private void fetchRides() {
-        progressBar.setVisibility(View.VISIBLE);
+        if (!swipeRefresh.isRefreshing()) {
+            progressBar.setVisibility(View.VISIBLE);
+        }
         emptyText.setVisibility(View.GONE);
         rideRecyclerView.setVisibility(View.GONE);
 
@@ -81,18 +83,12 @@ public class Activity_Fragment extends Fragment {
                 .child(driverId)
                 .child("rides");
 
-        ridesRef.addListenerForSingleValueEvent(new ValueEventListener() {
+        ridesRef.addValueEventListener(new ValueEventListener() {   // 👈 realtime listener
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
                 rideList.clear();
 
-                if (!snapshot.exists()) {
-                    Log.d("Activity_Fragment", "No rides found for driverId=" + driverId);
-                }
-
                 for (DataSnapshot rideSnap : snapshot.getChildren()) {
-                    Log.d("Activity_Fragment", "Ride snapshot: " + rideSnap.getValue());
-
                     HistoryRideModel ride = rideSnap.getValue(HistoryRideModel.class);
                     if (ride != null) {
                         if (ride.getRideId() == null || ride.getRideId().isEmpty()) {
@@ -102,7 +98,7 @@ public class Activity_Fragment extends Fragment {
                     }
                 }
 
-                Collections.reverse(rideList); // latest first
+                Collections.reverse(rideList);
                 adapter.notifyDataSetChanged();
 
                 progressBar.setVisibility(View.GONE);
@@ -122,10 +118,11 @@ public class Activity_Fragment extends Fragment {
             public void onCancelled(@NonNull DatabaseError error) {
                 progressBar.setVisibility(View.GONE);
                 swipeRefresh.setRefreshing(false);
-                emptyText.setText("Failed to load rides: " + error.getMessage());
+                emptyText.setText("Could not load rides. Please try again.");
                 emptyText.setVisibility(View.VISIBLE);
                 Log.e("Activity_Fragment", "Firebase error: " + error.getMessage());
             }
         });
     }
+
 }

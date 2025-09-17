@@ -28,8 +28,8 @@ public class DashBoard extends AppCompatActivity implements NavigationView.OnNav
         // Initialize views
         bottomNavigationView = findViewById(R.id.bottomNavigationView);
         drawerLayout = findViewById(R.id.drawer_layout);
-        NavigationView navigationView = findViewById(R.id.nav_view);
-        navigationView.setNavigationItemSelectedListener(this);
+
+
 
 
 
@@ -38,7 +38,7 @@ public class DashBoard extends AppCompatActivity implements NavigationView.OnNav
             getSupportFragmentManager().beginTransaction()
                     .replace(R.id.fragment_container, new UserRequest_Fragment())
                     .commit();
-            navigationView.setCheckedItem(R.id.nav_home);
+
             bottomNavigationView.setSelectedItemId(R.id.home);
         }
 

@@ -3,20 +3,18 @@ package com.example.driver;
 import android.content.Intent;
 import android.os.Bundle;
 import android.text.TextUtils;
+import android.text.method.HideReturnsTransformationMethod;
+import android.text.method.PasswordTransformationMethod;
 import android.util.Patterns;
-import android.view.View;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ImageView;
 import android.widget.Spinner;
 import android.widget.TextView;
 
-import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
-import com.google.android.gms.tasks.OnCompleteListener;
-import com.google.android.gms.tasks.Task;
-import com.google.firebase.auth.AuthResult;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
@@ -28,10 +26,13 @@ public class Signup_Activity extends AppCompatActivity {
     private EditText fullNameInput, vehicleNumberInput, phoneInput, dlNumberInput, emailInput, passwordInput;
     private Spinner vehicleSpinner;
     private Button signupBtn;
-    TextView loginRedirectBtn;
+    private TextView loginRedirectBtn;
+    private ImageView showPasswordBtn;
 
     private FirebaseAuth auth;
     private DatabaseReference driverRef;
+
+    private boolean isPasswordVisible = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -52,9 +53,10 @@ public class Signup_Activity extends AppCompatActivity {
         vehicleSpinner = findViewById(R.id.vehicleSpinner);
         signupBtn = findViewById(R.id.signupBtn);
         loginRedirectBtn = findViewById(R.id.loginRedirectBtn);
+        showPasswordBtn = findViewById(R.id.showPasswordBtn);
 
         // Spinner setup
-        String[] vehicleTypes = {"SUV", "Sedan", "Auto"};
+        String[] vehicleTypes = {"SUV", "Sedan", "Auto", "Bike", "Ambulance"};
         ArrayAdapter<String> adapter = new ArrayAdapter<>(
                 this,
                 R.layout.spinner_item,
@@ -62,6 +64,22 @@ public class Signup_Activity extends AppCompatActivity {
         );
         adapter.setDropDownViewResource(R.layout.spinner_dropdown_item);
         vehicleSpinner.setAdapter(adapter);
+
+        // 👁️ Toggle password visibility
+        showPasswordBtn.setOnClickListener(v -> {
+            if (isPasswordVisible) {
+                // Hide password
+                passwordInput.setTransformationMethod(PasswordTransformationMethod.getInstance());
+                showPasswordBtn.setImageResource(R.drawable.eye_closed);
+                isPasswordVisible = false;
+            } else {
+                // Show password
+                passwordInput.setTransformationMethod(HideReturnsTransformationMethod.getInstance());
+                showPasswordBtn.setImageResource(R.drawable.eye_open);
+                isPasswordVisible = true;
+            }
+            passwordInput.setSelection(passwordInput.getText().length());
+        });
 
         // Sign Up
         signupBtn.setOnClickListener(v -> registerDriver());
@@ -105,7 +123,7 @@ public class Signup_Activity extends AppCompatActivity {
             emailInput.setError("Enter valid email");
             return;
         }
-        if (password.length() < 6) {
+        if (password.length() < 7) {
             passwordInput.setError("Password must be at least 6 chars");
             return;
         }

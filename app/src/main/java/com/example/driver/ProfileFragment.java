@@ -6,20 +6,27 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 
-import com.example.driver.Login_Activity;
-import com.example.driver.MainActivity;
-import com.example.driver.R;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
 
 public class ProfileFragment extends Fragment {
 
     private FirebaseAuth auth;
-    private Button btnAccount, btnInfo, btnReview, btnNotification, btnFingerprint, btnBack, btnLogout;
+    private DatabaseReference driverRef;
+
+    private Button btnBack, btnLogout;
+    private TextView tvName, tvEmail;
+    private String driverId;
 
     @Nullable
     @Override
@@ -29,49 +36,27 @@ public class ProfileFragment extends Fragment {
 
         View view = inflater.inflate(R.layout.fragment_profile, container, false);
 
+        // Firebase
         auth = FirebaseAuth.getInstance();
+        driverId = auth.getCurrentUser().getUid();
+        driverRef = FirebaseDatabase.getInstance().getReference("drivers").child(driverId).child("info");
 
-        // Initialize buttons
-        btnAccount = view.findViewById(R.id.account_setting);
-        btnInfo = view.findViewById(R.id.profile_info);
-        btnReview = view.findViewById(R.id.review);
-        btnNotification = view.findViewById(R.id.notification);
-        btnFingerprint = view.findViewById(R.id.finger_print);
+        // UI
+        tvName = view.findViewById(R.id.profileName);
+        tvEmail = view.findViewById(R.id.profileEmail);
         btnBack = view.findViewById(R.id.profiletodashboard);
         btnLogout = view.findViewById(R.id.logoutBtn);
 
-        // Account settings
-        btnAccount.setOnClickListener(v -> {
-            // TODO: Open Account Settings Activity
-        });
+        // Load name & email
+        fetchProfileInfo();
 
-        // Profile Info
-        btnInfo.setOnClickListener(v -> {
-            // TODO: Open Profile Info Activity
-        });
-
-        // Review
-        btnReview.setOnClickListener(v -> {
-            // TODO: Open Review Page
-        });
-
-        // Notification
-        btnNotification.setOnClickListener(v -> {
-            // TODO: Open Notification Page
-        });
-
-        // Fingerprint
-        btnFingerprint.setOnClickListener(v -> {
-            // TODO: Enable fingerprint settings
-        });
-
-        // Back to Dashboard
+        // Back button
         btnBack.setOnClickListener(v -> {
             Intent intent = new Intent(getActivity(), DashBoard.class);
             startActivity(intent);
         });
 
-        // Logout
+        // Logout button
         btnLogout.setOnClickListener(v -> {
             auth.signOut();
             Intent intent = new Intent(getActivity(), Login_Activity.class);
@@ -81,5 +66,26 @@ public class ProfileFragment extends Fragment {
         });
 
         return view;
+    }
+
+    private void fetchProfileInfo() {
+        driverRef.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                if (snapshot.exists()) {
+                    String name = snapshot.child("fullName").getValue(String.class);
+                    String email = snapshot.child("email").getValue(String.class);
+
+                    tvName.setText(name != null ? name : "No Name");
+                    tvEmail.setText(email != null ? email : "No Email");
+                }
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+                tvName.setText("Error");
+                tvEmail.setText(error.getMessage());
+            }
+        });
     }
 }

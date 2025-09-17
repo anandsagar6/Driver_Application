@@ -23,7 +23,6 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:gravity="center"
-        android:layout_marginTop="10dp"
         android:orientation="vertical"
         android:layout_gravity="center"
         android:padding="24dp">
@@ -110,18 +109,38 @@
             android:padding="12dp"
             android:layout_marginTop="10dp"/>
 
-        <!-- Password -->
-        <EditText
-            android:id="@+id/passwordInput"
+        <RelativeLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="Password"
-            android:textColorHint="@color/colorTextsecond"
-            android:inputType="textPassword"
-            android:textColor="@color/black"
-            android:background="@drawable/bg_edittex"
-            android:padding="12dp"
-            android:layout_marginTop="10dp"/>
+            android:layout_marginTop="10dp">
+
+            <EditText
+                android:id="@+id/passwordInput"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="Password"
+                android:textColorHint="@color/colorTextsecond"
+                android:inputType="textPassword"
+                android:textColor="@color/black"
+                android:background="@drawable/bg_edittex"
+                android:padding="12dp"
+                android:layout_alignParentStart="true"
+                android:layout_alignParentEnd="true"
+                android:layout_toStartOf="@+id/showPasswordBtn"
+                android:layout_marginEnd="40dp"/>
+
+            <ImageView
+                android:id="@+id/showPasswordBtn"
+                android:layout_width="30dp"
+                android:layout_height="30dp"
+                android:src="@drawable/eye_closed"
+                android:layout_alignParentEnd="true"
+                android:layout_centerVertical="true"
+                android:padding="4dp"
+                android:clickable="true"
+                android:focusable="true"/>
+        </RelativeLayout>
+
 
         <!-- Signup Button -->
         <Button
