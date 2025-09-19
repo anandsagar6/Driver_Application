@@ -41,7 +41,7 @@
                 android:text="From: Cluster_bellanduru 8 Sri Sai Garden, Cluster..."
                 android:textColor="@color/text"
                 android:textSize="14sp"
-                android:textStyle="bold" />
+               />
 
         </LinearLayout>
 
@@ -70,7 +70,7 @@
                 android:text="To: bhopal"
                 android:textColor="@color/text"
                 android:textSize="14sp"
-                android:textStyle="bold" />
+               />
 
         </LinearLayout>
 

@@ -39,9 +39,9 @@ public class RideAdapter extends RecyclerView.Adapter<RideAdapter.RideViewHolder
     public void onBindViewHolder(@NonNull RideViewHolder holder, int position) {
         HistoryRideModel r = rides.get(position);
 
-        // From/To locations (single line with ellipsis)
-        holder.tvPickup.setText(formatLocation("From: ", safe(r.getPickupName())));
-        holder.tvDrop.setText(formatLocation("To: ", safe(r.getDropAddress())));
+        setBoldLabel(holder.tvPickup, "From: ", safe(r.getPickupName()));
+        setBoldLabel(holder.tvDrop, "To: ", safe(r.getDropAddress()));
+        setBoldLabel(holder.tvPrice, "Price: ", safe(r.getPrice()));
 
         // Date and time
         String dateTime = formatDateTime(safe(r.getBookingDate()), safe(r.getBookingTime()));
@@ -101,7 +101,17 @@ public class RideAdapter extends RecyclerView.Adapter<RideAdapter.RideViewHolder
             ratingBar.setIsIndicator(true);
             ratingBar.setFocusable(false);
             ratingBar.setClickable(false);
+
+
+
         }
+    }
+
+    private void setBoldLabel(TextView tv, String label, String value) {
+        SpannableString spannable = new SpannableString(label + value);
+        spannable.setSpan(new StyleSpan(Typeface.BOLD),
+                0, label.length(), SpannableString.SPAN_EXCLUSIVE_EXCLUSIVE);
+        tv.setText(spannable);
     }
 
     // Helper: safe string

@@ -34,7 +34,7 @@
                 android:src="@drawable/user"
                 android:scaleType="centerCrop"
                 android:background="@drawable/bg_card"
-                android:padding="4dp" />
+                android:padding="10dp" />
 
             <!-- Name -->
             <TextView

@@ -51,7 +51,7 @@ public class DashBoard extends AppCompatActivity implements NavigationView.OnNav
                 if (itemId == R.id.home) {
                     loadFragment(new UserRequest_Fragment());
                 } else if (itemId == R.id.Services) {
-                    loadFragment(new Search_Fragment());
+                    loadFragment(new Service_Fragment());
                 } else if (itemId == R.id.account) {
                     loadFragment(new ProfileFragment());
                 } else if (itemId == R.id.Activities) {
