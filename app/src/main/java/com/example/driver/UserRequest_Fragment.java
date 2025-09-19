@@ -83,6 +83,7 @@ public class UserRequest_Fragment extends Fragment {
     private Polyline currentRoute, pickupRoute;
 
     private float distanceInKm;
+    private View dimOverlay;
 
     private static final long MARKER_ANIM_DURATION = 1000; // ms
 
@@ -115,7 +116,7 @@ public class UserRequest_Fragment extends Fragment {
         tvPrice = view.findViewById(R.id.tvPrice);
         tvDistance = view.findViewById(R.id.tvDistance);
         progressBar = view.findViewById(R.id.progressBar);
-
+       dimOverlay = view.findViewById(R.id.dimOverlay);
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(requireActivity());
 
         // OSM Map setup
@@ -408,7 +409,7 @@ public class UserRequest_Fragment extends Fragment {
 
         // Add pickup marker
         if (pickup != null && pickupMarker == null) {
-            pickupMarker = createMarker(pickup, "Pickup: " + (pickupName != null ? pickupName : ""), R.drawable.pickup_location_icon);
+            pickupMarker = createMarker(pickup, "Pickup: " + (pickupName != null ? pickupName : ""), R.drawable.pickup_location);
             osmMap.getOverlays().add(pickupMarker);
         }
 
@@ -452,7 +453,11 @@ public class UserRequest_Fragment extends Fragment {
     }
 
     private void fetchRoute(GeoPoint start, GeoPoint end, int color, boolean isCurrentRoute) {
-        progressBar.setVisibility(View.VISIBLE);
+        requireActivity().runOnUiThread(() -> {
+            progressBar.setVisibility(View.VISIBLE);
+            dimOverlay.setVisibility(View.VISIBLE);
+        });
+
         String url = "https://router.project-osrm.org/route/v1/driving/"
                 + start.getLongitude() + "," + start.getLatitude() + ";"
                 + end.getLongitude() + "," + end.getLatitude()
@@ -465,6 +470,7 @@ public class UserRequest_Fragment extends Fragment {
             public void onFailure(@NonNull Call call, @NonNull IOException e) {
                 requireActivity().runOnUiThread(() -> {
                     progressBar.setVisibility(View.GONE);
+                    dimOverlay.setVisibility(View.GONE);
                     Toast.makeText(getContext(), "Route fetch failed", Toast.LENGTH_SHORT).show();
                 });
             }
@@ -498,12 +504,18 @@ public class UserRequest_Fragment extends Fragment {
 
                         osmMap.getOverlays().add(routeLine);
                         osmMap.invalidate();
-                        progressBar.setVisibility(View.GONE);
+
+
+                            // hide progress & dim overlay smoothly
+                            progressBar.setVisibility(View.GONE);
+                            hideDimOverlay();  // fade-out
+
                     });
                 } catch (Exception e) { e.printStackTrace(); }
             }
         });
     }
+
 
     /** ANIMATE DRIVER MARKER **/
     private void animateMarkerTo(Marker marker, GeoPoint toPosition, float toRotation, long duration) {
@@ -553,4 +565,26 @@ public class UserRequest_Fragment extends Fragment {
             fusedLocationClient.removeLocationUpdates(locationCallback);
         }
     }
+
+
+    private void showDimOverlay() {
+        if (dimOverlay == null) return;
+        dimOverlay.setVisibility(View.VISIBLE);
+        dimOverlay.setAlpha(0f);
+        dimOverlay.animate()
+                .alpha(1f)
+                .setDuration(300) // 300ms fade-in
+                .start();
+    }
+
+    private void hideDimOverlay() {
+        if (dimOverlay == null) return;
+        dimOverlay.animate()
+                .alpha(0f)
+                .setDuration(300) // 300ms fade-out
+                .withEndAction(() -> dimOverlay.setVisibility(View.GONE))
+                .start();
+    }
+
+
 }

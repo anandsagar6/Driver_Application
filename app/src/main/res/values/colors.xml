@@ -11,4 +11,9 @@
     <color name="lavender">#8692f7</color>
     <color name="text">#340865</color>
     <color name="black">#000000</color>
+    <color name="star_selected">#FFC107</color> <!-- Amber color for selected stars -->
+    <color name="star_unselected">#BDBDBD</color> <!-- Light gray for unselected stars -->
+    <color name="status_completed">#4CAF50</color>    <!-- Green -->
+    <color name="status_accepted">#FF9800</color>    <!-- Orange -->
+    <color name="status_cancelled">#F44336</color>   <!-- Red -->
 </resources>

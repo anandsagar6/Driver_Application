@@ -1,7 +1,9 @@
 package com.example.driver;
 
 import android.content.Context;
+import android.content.res.ColorStateList;
 import android.graphics.Typeface;
+import android.os.Build;
 import android.text.SpannableString;
 import android.text.style.StyleSpan;
 import android.view.LayoutInflater;
@@ -37,58 +39,44 @@ public class RideAdapter extends RecyclerView.Adapter<RideAdapter.RideViewHolder
     public void onBindViewHolder(@NonNull RideViewHolder holder, int position) {
         HistoryRideModel r = rides.get(position);
 
-        // Pickup & Drop with bold labels
-        setBoldLabel(holder.tvPickup, "From: ", safe(r.getPickupName()));
-        setBoldLabel(holder.tvDrop, "To: ", safe(r.getDropAddress()));
+        // From/To locations (single line with ellipsis)
+        holder.tvPickup.setText(formatLocation("From: ", safe(r.getPickupName())));
+        holder.tvDrop.setText(formatLocation("To: ", safe(r.getDropAddress())));
 
+        // Date and time
+        String dateTime = formatDateTime(safe(r.getBookingDate()), safe(r.getBookingTime()));
+        holder.tvDateTime.setText(dateTime);
 
+        // Price with rupee symbol
+        holder.tvPrice.setText(formatPrice(safe(r.getPrice())));
 
-
-        // Booking Date + Time
-        String dateTime = (safe(r.getBookingDate()) +
-                (r.getBookingTime() != null && !r.getBookingTime().isEmpty() ? "  " + r.getBookingTime() : "")).trim();
-        holder.tvDateTime.setText(!dateTime.isEmpty() ? dateTime : "—");
-
-        // Price
-// Price
-        setBoldLabel(holder.tvPrice, "Fare: ",   safe(r.getPrice()));
-
-        // Status with color
+        // Status with color (capitalized)
         String status = safe(r.getStatus()).toLowerCase();
-        holder.tvStatus.setText(status.replace('_', ' '));
-        int colorRes;
-        switch (status) {
-            case "cancelled_by_driver":
-            case "cancelled_by_system":
-                colorRes = android.R.color.holo_red_dark;
-                break;
-            case "accepted":
-            case "waiting":
-                colorRes = android.R.color.holo_orange_light;
-                break;
-            case "completed":
-                colorRes = android.R.color.holo_green_dark;
-                break;
-            default:
-                colorRes = android.R.color.black;
+        holder.tvStatus.setText(formatStatus(status));
+        holder.tvStatus.setTextColor(getStatusColor(status));
+
+        // Rating - only show for completed rides
+        if ("completed".equals(status)) {
+            setupRating(holder.ratingBar, r.getRating());
+            holder.ratingBar.setVisibility(View.VISIBLE);
+
+            // Apply star color programmatically (API 21+)
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                ColorStateList colorStateList = ColorStateList.valueOf(ContextCompat.getColor(context, R.color.star_selected));
+                holder.ratingBar.setProgressTintList(colorStateList);
+
+                ColorStateList secondaryColorStateList = ColorStateList.valueOf(ContextCompat.getColor(context, R.color.star_unselected));
+                holder.ratingBar.setProgressBackgroundTintList(secondaryColorStateList);
+                holder.ratingBar.setSecondaryProgressTintList(secondaryColorStateList);
+            }
+        } else {
+            holder.ratingBar.setVisibility(View.GONE);
         }
-        holder.tvStatus.setTextColor(ContextCompat.getColor(context, colorRes));
 
         // Item click
         holder.itemView.setOnClickListener(v -> {
             // handle click if needed
         });
-
-        try {
-            float ratingValue = Float.parseFloat(String.valueOf(r.getRating()));
-// if it's stored as string
-            holder.ratingBar.setRating(ratingValue);
-        } catch (NumberFormatException e) {
-            holder.ratingBar.setRating(0); // default if not valid
-        }
-
-
-
     }
 
     @Override
@@ -97,8 +85,9 @@ public class RideAdapter extends RecyclerView.Adapter<RideAdapter.RideViewHolder
     }
 
     static class RideViewHolder extends RecyclerView.ViewHolder {
-        TextView tvPickup, tvDrop, tvDateTime, tvPrice, tvStatus,  tvStartEndTimes;
+        TextView tvPickup, tvDrop, tvDateTime, tvPrice, tvStatus;
         RatingBar ratingBar;
+
         RideViewHolder(@NonNull View itemView) {
             super(itemView);
             tvPickup = itemView.findViewById(R.id.tvPickup);
@@ -108,32 +97,96 @@ public class RideAdapter extends RecyclerView.Adapter<RideAdapter.RideViewHolder
             tvStatus = itemView.findViewById(R.id.tvStatus);
             ratingBar = itemView.findViewById(R.id.ratingBar);
 
+            // Ensure rating bar is not clickable
+            ratingBar.setIsIndicator(true);
+            ratingBar.setFocusable(false);
+            ratingBar.setClickable(false);
         }
     }
 
-
-
-
     // Helper: safe string
     private static String safe(String s) {
-        if (s == null) return "—";
+        if (s == null) return "";
         String t = s.trim();
-        return t.isEmpty() ? "—" : t;
+        return t.isEmpty() ? "" : t;
     }
 
-    // Helper: set single bold label
-    private void setBoldLabel(TextView tv, String label, String value) {
-        SpannableString spannable = new SpannableString(label + value);
-        spannable.setSpan(new StyleSpan(Typeface.BOLD),
-                0, label.length(), SpannableString.SPAN_EXCLUSIVE_EXCLUSIVE);
-        tv.setText(spannable);
+    // Helper: format location with ellipsis
+    private String formatLocation(String prefix, String location) {
+        return prefix + location;
     }
 
-    // Helper: append another bold label to existing TextView
-    private void appendBoldLabel(TextView tv, String label, String value) {
-        SpannableString spannable = new SpannableString(label + value);
-        spannable.setSpan(new StyleSpan(Typeface.BOLD),
-                0, label.length(), SpannableString.SPAN_EXCLUSIVE_EXCLUSIVE);
-        tv.append(spannable);
+    // Helper: format date and time
+    private String formatDateTime(String date, String time) {
+        if (date.isEmpty() && time.isEmpty()) return "";
+        if (time.isEmpty()) return date;
+        if (date.isEmpty()) return time;
+        return date + "  " + time;
+    }
+
+    // Helper: format price with rupee symbol
+    private String formatPrice(String price) {
+        if (price.isEmpty()) return "₹0";
+        // Remove any existing rupee symbol to avoid duplication
+        String cleanPrice = price.replace("₹", "").trim();
+        return "₹" + cleanPrice;
+    }
+
+    // Helper: format status text
+    private String formatStatus(String status) {
+        // Convert snake_case to Title Case
+        String formatted = status.replace('_', ' ');
+        String[] words = formatted.split(" ");
+        StringBuilder result = new StringBuilder();
+
+        for (String word : words) {
+            if (word.length() > 0) {
+                result.append(Character.toUpperCase(word.charAt(0)))
+                        .append(word.substring(1).toLowerCase())
+                        .append(" ");
+            }
+        }
+
+        return result.toString().trim();
+    }
+
+    // Helper: get status color
+    private int getStatusColor(String status) {
+        switch (status) {
+            case "cancelled_by_driver":
+            case "cancelled_by_system":
+                return ContextCompat.getColor(context, android.R.color.holo_red_dark);
+            case "accepted":
+            case "waiting":
+                return ContextCompat.getColor(context, android.R.color.holo_orange_light);
+            case "completed":
+                return ContextCompat.getColor(context, android.R.color.holo_green_dark);
+            default:
+                return ContextCompat.getColor(context, android.R.color.black);
+        }
+    }
+
+    // Helper: setup rating bar
+    private void setupRating(RatingBar ratingBar, Object rating) {
+        float ratingValue = 0;
+
+        if (rating instanceof Number) {
+            ratingValue = ((Number) rating).floatValue();
+        } else if (rating instanceof String) {
+            try {
+                ratingValue = Float.parseFloat((String) rating);
+            } catch (NumberFormatException e) {
+                ratingValue = 0;
+            }
+        }
+
+        // Ensure rating is within valid range (0-5)
+        ratingValue = Math.max(0, Math.min(5, ratingValue));
+        ratingBar.setRating(ratingValue);
+
+        // Make sure rating bar is not clickable
+        ratingBar.setIsIndicator(true);
+        ratingBar.setFocusable(false);
+        ratingBar.setClickable(false);
     }
 }

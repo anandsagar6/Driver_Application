@@ -17,4 +17,14 @@
     <string name="notes">notes</string>
     <string name="anand_sagar">Anand sagar</string>
 
+    <!-- Add these styles to your res/values/styles.xml file -->
+    <style name="CustomRatingBar" parent="Theme.AppCompat">
+        <item name="colorControlNormal">@color/star_unselected</item>
+        <item name="colorControlActivated">@color/star_selected</item>
+    </style>
+
+    <style name="CustomRatingBarIndicator" parent="CustomRatingBar">
+        <item name="android:progressDrawable">@drawable/rating_bar_indicator</item>
+    </style>
+
 </resources>

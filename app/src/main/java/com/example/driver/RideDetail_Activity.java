@@ -8,8 +8,10 @@ import android.os.AsyncTask;
 import android.os.Bundle;
 import android.text.InputFilter;
 import android.text.InputType;
+import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -52,6 +54,8 @@ public class RideDetail_Activity extends AppCompatActivity {
     private String rideId, driverId;
     private double pickupLat, pickupLng, destLat, destLng, driverLat, driverLng;
     private String pickupName, dropName, price, rideType, status;
+    private View dimOverlay;
+    private ProgressBar progressBar;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -69,7 +73,8 @@ public class RideDetail_Activity extends AppCompatActivity {
         distanceText = findViewById(R.id.distanceText);
         startRideBtn = findViewById(R.id.startRideBtn);
         cancelRideBtn = findViewById(R.id.cancelRideBtn);
-
+        dimOverlay = findViewById(R.id.dimOverlay);
+        progressBar = findViewById(R.id.progressBar);
         startRideBtn.setVisibility(Button.GONE);
         cancelRideBtn.setVisibility(Button.GONE);
 
@@ -279,6 +284,7 @@ public class RideDetail_Activity extends AppCompatActivity {
                 + start.getLongitude() + "," + start.getLatitude() + ";"
                 + end.getLongitude() + "," + end.getLatitude()
                 + "?overview=full&geometries=geojson";
+        showProgress();
         new FetchRouteTask().execute(url);
     }
 
@@ -314,6 +320,7 @@ public class RideDetail_Activity extends AppCompatActivity {
 
         @Override
         protected void onPostExecute(ArrayList<GeoPoint> routePoints) {
+            hideProgress();
             if (!routePoints.isEmpty()) {
                 Polyline line = new Polyline();
                 line.setPoints(routePoints);
@@ -403,7 +410,43 @@ public class RideDetail_Activity extends AppCompatActivity {
         redirectToDashboard();
     }
 
-    private void confirmCancelRide() { /* your previous code */ }
+    private void confirmCancelRide() {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle("Cancel Ride");
+        builder.setMessage("Are you sure you want to cancel this ride?");
+        builder.setPositiveButton("Yes", (dialog, which) -> {
+            String currentTime = new SimpleDateFormat("hh:mm a", Locale.getDefault()).format(new Date());
+            // Update ride status
+            ridesRef.child(rideId).child("status").setValue("cancelled_by_driver");
+            ridesRef.child(rideId).child("rideEndTime").setValue(currentTime);
+
+            // Update driver node
+            FirebaseDatabase.getInstance().getReference("drivers")
+                    .child(driverId).child("rides").child(rideId).child("status").setValue("cancelled_by_driver");
+
+            // Update customer node
+            ridesRef.child(rideId).child("customerId").addListenerForSingleValueEvent(new ValueEventListener() {
+                @Override
+                public void onDataChange(@NonNull DataSnapshot snapshot) {
+                    if (snapshot.exists()) {
+                        String customerId = snapshot.getValue(String.class);
+                        FirebaseDatabase.getInstance().getReference("Customers")
+                                .child(customerId).child("rides").child(rideId).child("status")
+                                .setValue("cancelled_by_driver");
+                    }
+                }
+                @Override
+                public void onCancelled(@NonNull DatabaseError error) {}
+            });
+
+            Toast.makeText(RideDetail_Activity.this, "❌ Ride Cancelled", Toast.LENGTH_SHORT).show();
+            redirectToDashboard();
+        });
+
+        builder.setNegativeButton("No", (dialog, which) -> dialog.dismiss());
+        builder.show();
+    }
+
     private void redirectToDashboard() {
         startActivity(new Intent(this, DashBoard.class));
         finish();
@@ -418,6 +461,15 @@ public class RideDetail_Activity extends AppCompatActivity {
         } else {
             super.onBackPressed();
         }
+    }
+    private void showProgress() {
+        if (dimOverlay != null) dimOverlay.setVisibility(View.VISIBLE);
+        if (progressBar != null) progressBar.setVisibility(View.VISIBLE);
+    }
+
+    private void hideProgress() {
+        if (dimOverlay != null) dimOverlay.setVisibility(View.GONE);
+        if (progressBar != null) progressBar.setVisibility(View.GONE);
     }
 
 
