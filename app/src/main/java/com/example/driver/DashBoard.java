@@ -14,7 +14,7 @@ import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.google.android.material.navigation.NavigationBarView;
 import com.google.android.material.navigation.NavigationView;
 
-public class DashBoard extends AppCompatActivity implements NavigationView.OnNavigationItemSelectedListener {
+public class DashBoard extends AppCompatActivity {
 
     private DrawerLayout drawerLayout;
     private BottomNavigationView bottomNavigationView;
@@ -77,23 +77,5 @@ public class DashBoard extends AppCompatActivity implements NavigationView.OnNav
         }
     }
 
-    @Override
-    public boolean onNavigationItemSelected(@NonNull MenuItem item) {
-        int id = item.getItemId();
 
-        if (id == R.id.nav_home) {
-            loadFragment(new Home_Fragment());
-            bottomNavigationView.setSelectedItemId(R.id.home);
-        } else if (id == R.id.nav_account) {
-            loadFragment(new ProfileFragment());
-            bottomNavigationView.setSelectedItemId(R.id.account);
-        } else if (id == R.id.nav_share) {
-            Toast.makeText(this, "Share clicked", Toast.LENGTH_SHORT).show();
-        } else if (id == R.id.nav_about) {
-            Toast.makeText(this, "About clicked", Toast.LENGTH_SHORT).show();
-        }
-
-        drawerLayout.closeDrawer(GravityCompat.START);
-        return true;
-    }
 }

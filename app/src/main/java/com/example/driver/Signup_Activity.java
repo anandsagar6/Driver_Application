@@ -4,6 +4,7 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.util.Patterns;
+import android.view.View;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
@@ -23,7 +24,7 @@ public class Signup_Activity extends AppCompatActivity {
     private EditText fullNameInput, vehicleNumberInput, phoneInput, dlNumberInput, emailInput, passwordInput;
     private Spinner vehicleSpinner;
     private Button signupBtn;
-    private TextView loginRedirectBtn;
+    private TextView loginRedirectBtn,privacy,term;
 
     private FirebaseAuth auth;
     private DatabaseReference driverRef;
@@ -47,6 +48,24 @@ public class Signup_Activity extends AppCompatActivity {
         vehicleSpinner = findViewById(R.id.vehicleSpinner);
         signupBtn = findViewById(R.id.signupBtn);
         loginRedirectBtn = findViewById(R.id.loginRedirectBtn);
+        privacy=findViewById(R.id.txtPrivacyPolicy);
+        term=findViewById(R.id.txtTermsConditions);
+
+
+        privacy.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Intent i = new Intent(Signup_Activity.this,PrivacyPolicyActivity.class);
+                startActivity(i);
+            }
+        });
+        term.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Intent i = new Intent(Signup_Activity.this,TermsConditionsActivity.class);
+                startActivity(i);
+            }
+        });
 
         // Spinner setup
         String[] vehicleTypes = {"SUV", "Sedan", "Auto", "Bike", "Ambulance"};

@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/main"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/white"
+    tools:context=".TermsConditionsActivity">
+    <ImageButton
+        android:id="@+id/backButton"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:background="?attr/selectableItemBackgroundBorderless"
+        android:src="@drawable/back_btn"
+        android:contentDescription="Back"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        android:layout_marginStart="16dp"
+        android:layout_marginTop="45dp"/>
+
+    <TextView
+        android:id="@+id/Title"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Terms and Conditions"
+        android:textSize="28sp"
+        android:textStyle="bold"
+        android:textColor="@color/text"
+        android:layout_marginTop="45dp"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:gravity="center"/>
+
+
+    <ScrollView
+        android:id="@+id/scrollView"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:padding="16dp"
+        app:layout_constraintTop_toBottomOf="@id/Title"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+            <!-- Headline -->
+
+
+            <TextView
+                android:id="@+id/termsDriverDescription"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textSize="16sp"
+                android:textColor="@color/text"
+                android:lineSpacingExtra="4dp"
+                android:layout_marginBottom="30dp"
+                android:text="Rideer Driver App Terms and Conditions\n\nEffective Date: [Insert Date]\n\n1. Introduction\nBy using Rideer Driver App, you agree to these Terms and Conditions. Please read them carefully.\n\n2. Eligibility\n- Drivers must be at least 18 years old.\n- Drivers must comply with all local laws and safety regulations.\n\n3. Driver Responsibilities\n- Keep your account credentials confidential.\n- Ensure your vehicle and documents are valid and up-to-date.\n- Accept or reject ride requests at your discretion.\n\n4. Ride Fulfillment\n- Drivers are responsible for safely completing rides.\n- Rideer is not liable if a driver rejects a ride request.\n- All rides must comply with local transportation laws.\n\n5. Location Services\n- Drivers must enable location access for the app to function properly.\n- Location is used to match with riders and provide accurate navigation.\n\n6. Payment Information\n- Rideer Driver App does not currently process driver payments directly.\n- In the future, secure third-party systems may handle payouts for completed rides.\n\n7. Demo Mode Disclaimer\n- Rideer is currently in demo mode. While users can book rides and drivers will see ride requests in the app, there are no real drivers in the physical world at this time. This is for testing purposes only.\n\n8. Limitation of Liability\n- Rideer Driver App is not responsible for accidents, delays, or damages during rides.\n- The app is provided 'as is' without warranties.\n\n9. Modifications\n- Terms and Conditions may be updated from time to time.\n- Drivers should review this page regularly to stay informed.\n\n10. Contact\n- For any questions, feedback, or disputes, contact anandsagar0006@gmail.com"
+                />
+
+
+
+
+
+        </LinearLayout>
+    </ScrollView>
+</androidx.constraintlayout.widget.ConstraintLayout>

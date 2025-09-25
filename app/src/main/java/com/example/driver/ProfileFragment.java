@@ -23,7 +23,7 @@ public class ProfileFragment extends Fragment {
 
     private FirebaseAuth auth;
     private DatabaseReference driverRef;
-
+    Button privacyPolicyBtn, termsConditionsBtn,about_us;
     private Button btnBack, btnLogout;
     private TextView tvName, tvEmail;
     private String driverId;
@@ -46,6 +46,9 @@ public class ProfileFragment extends Fragment {
         tvEmail = view.findViewById(R.id.profileEmail);
         btnBack = view.findViewById(R.id.profiletodashboard);
         btnLogout = view.findViewById(R.id.logoutBtn);
+        about_us = view.findViewById(R.id.About_us);
+        privacyPolicyBtn = view.findViewById(R.id.privacy_policy);          // New
+        termsConditionsBtn = view.findViewById(R.id.terms_conditions);
 
         // Load name & email
         fetchProfileInfo();
@@ -63,6 +66,24 @@ public class ProfileFragment extends Fragment {
             intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
             startActivity(intent);
             requireActivity().finish();
+        });
+
+        about_us.setOnClickListener(v -> {
+            Intent intent = new Intent(getActivity(), AboutUsActivity.class);
+            startActivity(intent);
+            requireActivity().overridePendingTransition(R.anim.zoom_in, R.anim.zoom_out);
+        });
+
+        privacyPolicyBtn.setOnClickListener(v -> {
+            Intent intent = new Intent(getActivity(), PrivacyPolicyActivity.class);
+            startActivity(intent);
+            requireActivity().overridePendingTransition(R.anim.zoom_in, R.anim.zoom_out);
+        });
+
+        termsConditionsBtn.setOnClickListener(v -> {
+            Intent intent = new Intent(getActivity(), TermsConditionsActivity.class);
+            startActivity(intent);
+            requireActivity().overridePendingTransition(R.anim.zoom_in, R.anim.zoom_out);
         });
 
         return view;

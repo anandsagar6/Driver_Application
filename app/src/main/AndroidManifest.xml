@@ -3,13 +3,13 @@
     xmlns:tools="http://schemas.android.com/tools"
     package="com.example.driver">
 
+    <!-- Location (only when app is in use, NOT in background) -->
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>
+
+    <!-- Internet & Network (for Firebase / OSM API calls) -->
     <uses-permission android:name="android.permission.INTERNET"/>
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
-
-
-
 
     <application
         android:dataExtractionRules="@xml/data_extraction_rules"
@@ -20,6 +20,16 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.Driver"
         tools:targetApi="31">
+
+        <activity
+            android:name=".AboutUsActivity"
+            android:exported="false" />
+        <activity
+            android:name=".TermsConditionsActivity"
+            android:exported="false" />
+        <activity
+            android:name=".PrivacyPolicyActivity"
+            android:exported="false" />
         <activity
             android:name=".RideDetail_Activity"
             android:exported="false" />
@@ -28,7 +38,6 @@
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
-
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
@@ -48,9 +57,8 @@
             android:name=".MainActivity"
             android:exported="false" />
 
-        <meta-data
-            android:name="com.google.android.geo.API_KEY"
-            android:value="AIzaSyDmIOAU2Dvqbl7RB_R9xSNz6747P9_Ssbg" />
+
+
         <meta-data
             android:name="preloaded_fonts"
             android:resource="@array/preloaded_fonts" />

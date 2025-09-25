@@ -54,8 +54,7 @@ public class RideDetail_Activity extends AppCompatActivity {
     private String rideId, driverId;
     private double pickupLat, pickupLng, destLat, destLng, driverLat, driverLng;
     private String pickupName, dropName, price, rideType, status;
-    private View dimOverlay;
-    private ProgressBar progressBar;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -73,8 +72,8 @@ public class RideDetail_Activity extends AppCompatActivity {
         distanceText = findViewById(R.id.distanceText);
         startRideBtn = findViewById(R.id.startRideBtn);
         cancelRideBtn = findViewById(R.id.cancelRideBtn);
-        dimOverlay = findViewById(R.id.dimOverlay);
-        progressBar = findViewById(R.id.progressBar);
+
+
         startRideBtn.setVisibility(Button.GONE);
         cancelRideBtn.setVisibility(Button.GONE);
 
@@ -118,7 +117,7 @@ public class RideDetail_Activity extends AppCompatActivity {
                 if (!snapshot.exists()) { finish(); return; }
 
                 pickupName = snapshot.child("pickupName").getValue(String.class);
-                dropName = snapshot.child("dropName").getValue(String.class);
+                dropName = snapshot.child("dropAddress").getValue(String.class);
 
                 price = snapshot.child("price").getValue(String.class);
                 rideType = snapshot.child("rideType").getValue(String.class);
@@ -148,7 +147,7 @@ public class RideDetail_Activity extends AppCompatActivity {
 
                 // Automatically handle ongoing ride
                 if ("ongoing".equalsIgnoreCase(status)) {
-                    startRideBtn.setText("End Ride");
+                    startRideBtn.setText("Ride Completed");
                     startRideBtn.setVisibility(Button.VISIBLE);
                     cancelRideBtn.setVisibility(Button.GONE);
                 } else if ("accepted".equalsIgnoreCase(status)) {
@@ -230,22 +229,20 @@ public class RideDetail_Activity extends AppCompatActivity {
     }
 
     private void updateButtons() {
+        startRideBtn.setVisibility(View.VISIBLE); // Always visible
+        cancelRideBtn.setVisibility(View.VISIBLE); // Optional: show cancel if needed
+
+        if ("ongoing".equalsIgnoreCase(status)) {
+            startRideBtn.setText("End Ride");
+        } else {
+            startRideBtn.setText("Start Ride");
+        }
+
+        // Show driver distance (optional)
         float distance = calculateDistance(driverLat, driverLng, pickupLat, pickupLng);
         distanceText.setText("Driver distance: " + String.format("%.2f", distance) + " km");
-
-        if ("accepted".equalsIgnoreCase(status) && distance <= 0.2) {
-            startRideBtn.setText("Start Ride");
-            startRideBtn.setVisibility(Button.VISIBLE);
-            cancelRideBtn.setVisibility(Button.VISIBLE);
-        } else if ("ongoing".equalsIgnoreCase(status)) {
-            startRideBtn.setText("End Ride");
-            startRideBtn.setVisibility(Button.VISIBLE);
-            cancelRideBtn.setVisibility(Button.GONE);
-        } else {
-            startRideBtn.setVisibility(Button.GONE);
-            cancelRideBtn.setVisibility(Button.GONE);
-        }
     }
+
 
     private float calculateDistance(double lat1, double lng1, double lat2, double lng2) {
         float[] results = new float[1];
@@ -261,16 +258,21 @@ public class RideDetail_Activity extends AppCompatActivity {
         GeoPoint dest = new GeoPoint(destLat, destLng);
         GeoPoint driver = new GeoPoint(driverLat, driverLng);
 
-        if (pickupLat != 0) addMarker(pickup, "Pickup: " + pickupName);
-        if (destLat != 0) addMarker(dest, "Destination: " + dropName);
-        if (driverLat != 0) addMarker(driver, "Driver (You)");
+        // Add markers
+        if (pickupLat != 0 && pickupLng != 0) addMarker(pickup, "Pickup: " + pickupName);
+        if (destLat != 0 && destLng != 0) addMarker(dest, "Destination: " + dropName);
+        if (driverLat != 0 && driverLng != 0) addMarker(driver, "Driver (You)");
 
-        // Route
-        if ("accepted".equalsIgnoreCase(status)) fetchRoute(driver, pickup);
-        else if ("ongoing".equalsIgnoreCase(status)) fetchRoute(pickup, dest);
+        // Draw route based on ride status
+        if ("ongoing".equalsIgnoreCase(status)) {
+            fetchRoute(pickup, dest); // Route from pickup to drop
+        } else {
+            fetchRoute(driver, pickup); // Route from driver to pickup
+        }
 
         osmMap.invalidate();
     }
+
 
     private void addMarker(GeoPoint point, String title) {
         Marker m = new Marker(osmMap);
@@ -284,7 +286,7 @@ public class RideDetail_Activity extends AppCompatActivity {
                 + start.getLongitude() + "," + start.getLatitude() + ";"
                 + end.getLongitude() + "," + end.getLatitude()
                 + "?overview=full&geometries=geojson";
-        showProgress();
+
         new FetchRouteTask().execute(url);
     }
 
@@ -320,7 +322,6 @@ public class RideDetail_Activity extends AppCompatActivity {
 
         @Override
         protected void onPostExecute(ArrayList<GeoPoint> routePoints) {
-            hideProgress();
             if (!routePoints.isEmpty()) {
                 Polyline line = new Polyline();
                 line.setPoints(routePoints);
@@ -328,11 +329,13 @@ public class RideDetail_Activity extends AppCompatActivity {
                 line.setWidth(8f);
                 osmMap.getOverlays().add(line);
 
+                // Zoom to show the entire route
                 BoundingBox box = BoundingBox.fromGeoPoints(routePoints);
-                osmMap.zoomToBoundingBox(box, true, 80);
+                osmMap.zoomToBoundingBox(box, true, 100); // padding 100 pixels
                 osmMap.invalidate();
             }
         }
+
     }
 
     private void showPinDialog() {
@@ -461,15 +464,6 @@ public class RideDetail_Activity extends AppCompatActivity {
         } else {
             super.onBackPressed();
         }
-    }
-    private void showProgress() {
-        if (dimOverlay != null) dimOverlay.setVisibility(View.VISIBLE);
-        if (progressBar != null) progressBar.setVisibility(View.VISIBLE);
-    }
-
-    private void hideProgress() {
-        if (dimOverlay != null) dimOverlay.setVisibility(View.GONE);
-        if (progressBar != null) progressBar.setVisibility(View.GONE);
     }
 
 

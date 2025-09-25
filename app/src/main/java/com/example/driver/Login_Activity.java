@@ -2,6 +2,7 @@ package com.example.driver;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
@@ -16,7 +17,7 @@ public class Login_Activity extends AppCompatActivity {
     EditText emailInput, passwordInput;
     Button loginBtn;
     FirebaseAuth auth;
-    TextView signupRedirectBtn;
+    TextView signupRedirectBtn,privacy,term;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -27,6 +28,24 @@ public class Login_Activity extends AppCompatActivity {
         passwordInput = findViewById(R.id.passwordInput);
         loginBtn = findViewById(R.id.loginBtn);
         signupRedirectBtn = findViewById(R.id.signupRedirectBtn);
+        privacy=findViewById(R.id.txtPrivacyPolicy);
+        term=findViewById(R.id.txtTermsConditions);
+
+
+        privacy.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Intent i = new Intent(Login_Activity.this,PrivacyPolicyActivity.class);
+                startActivity(i);
+            }
+        });
+        term.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Intent i = new Intent(Login_Activity.this,TermsConditionsActivity.class);
+                startActivity(i);
+            }
+        });
 
         auth = FirebaseAuth.getInstance();
 
