@@ -1,10 +1,15 @@
-<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+<ScrollView
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:fillViewport="true"
     android:background="@color/white"
-    tools:context=".Signup_Activity">
+    android:fitsSystemWindows="true"
+    tools:context=".Signup_Activity"
+>
+
+
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -14,10 +19,12 @@
     <!-- Top Banner -->
     <ImageView
         android:id="@+id/imageView10"
-        android:layout_width="match_parent"
+        android:layout_width="200dp"
         android:layout_height="200dp"
         android:scaleType="fitXY"
-        android:src="@drawable/top_background" />
+        android:layout_gravity="center"
+        android:layout_marginTop="0dp"
+        android:src="@drawable/driver_registration" />
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -35,30 +42,50 @@
             android:textStyle="bold"
             android:textColor="@color/text"
             android:layout_marginBottom="12dp" />
+        <!-- Progress Bar -->
+        <ProgressBar
+            android:id="@+id/signupProgressBar"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:visibility="gone"
+            android:layout_gravity="center"/>
+
 
         <!-- First Name -->
         <EditText
             android:id="@+id/fullNameInput"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="Full Name"
+            android:hint="First Name"
             android:textColor="@color/black"
             android:textColorHint="@color/colorTextsecond"
             android:background="@drawable/bg_edittex"
             android:padding="12dp"
            />
 
-        <!-- Last Name -->
         <EditText
-            android:id="@+id/vehicleNumberInput"
+            android:id="@+id/lastNameInput"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="Vehicle Number"
+            android:hint="Last name"
             android:textColorHint="@color/colorTextsecond"
             android:textColor="@color/black"
+            android:inputType="textEmailAddress"
             android:background="@drawable/bg_edittex"
             android:padding="12dp"
-            android:layout_marginTop="10dp"/>
+            android:layout_marginTop="10dp"
+            />
+
+        <Spinner
+            android:id="@+id/GenderSpinner"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:background="@drawable/spinner_bg"
+            android:padding="12dp" />
+
+
 
         <!-- Phone -->
         <EditText
@@ -68,33 +95,15 @@
             android:textColorHint="@color/colorTextsecond"
             android:hint="Phone Number (10 digits)"
             android:inputType="phone"
+            android:maxLength="10"
             android:textColor="@color/black"
             android:background="@drawable/bg_edittex"
             android:padding="12dp"
             android:layout_marginTop="10dp"/>
 
-        <!-- Vehicle Spinner -->
-        <Spinner
-            android:id="@+id/vehicleSpinner"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:textColorHint="@color/colorTextsecond"
-            android:textColor="@color/black"
-            android:background="@drawable/spinner_bg"
-            android:padding="12dp"
-            android:layout_marginTop="10dp"/>
 
-        <!-- Driving License -->
-        <EditText
-            android:id="@+id/dlNumberInput"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:hint="Driving License Number"
-            android:textColor="@color/black"
-            android:background="@drawable/bg_edittex"
-            android:padding="12dp"
-            android:textColorHint="@color/colorTextsecond"
-            android:layout_marginTop="10dp"/>
+
+
 
         <!-- Email -->
         <EditText

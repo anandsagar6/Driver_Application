@@ -5,11 +5,14 @@ import android.os.Bundle;
 import android.text.TextUtils;
 import android.util.Patterns;
 import android.view.View;
+import android.view.WindowManager;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ProgressBar;
 import android.widget.Spinner;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 
@@ -21,10 +24,11 @@ import java.util.HashMap;
 
 public class Signup_Activity extends AppCompatActivity {
 
-    private EditText fullNameInput, vehicleNumberInput, phoneInput, dlNumberInput, emailInput, passwordInput;
-    private Spinner vehicleSpinner;
+    private EditText firstNameInput, lastNameInput, phoneInput, emailInput, passwordInput;
+    private Spinner genderSpinner;
     private Button signupBtn;
-    private TextView loginRedirectBtn,privacy,term;
+    private TextView loginRedirectBtn, privacy, term;
+    private ProgressBar signupProgressBar;
 
     private FirebaseAuth auth;
     private DatabaseReference driverRef;
@@ -39,131 +43,131 @@ public class Signup_Activity extends AppCompatActivity {
         driverRef = FirebaseDatabase.getInstance().getReference("drivers");
 
         // Views
-        fullNameInput = findViewById(R.id.fullNameInput);
-        vehicleNumberInput = findViewById(R.id.vehicleNumberInput);
+        firstNameInput = findViewById(R.id.fullNameInput);
+        lastNameInput = findViewById(R.id.lastNameInput);
         phoneInput = findViewById(R.id.phoneInput);
-        dlNumberInput = findViewById(R.id.dlNumberInput);
         emailInput = findViewById(R.id.emailInput);
         passwordInput = findViewById(R.id.passwordInput);
-        vehicleSpinner = findViewById(R.id.vehicleSpinner);
+        genderSpinner = findViewById(R.id.GenderSpinner);
         signupBtn = findViewById(R.id.signupBtn);
         loginRedirectBtn = findViewById(R.id.loginRedirectBtn);
-        privacy=findViewById(R.id.txtPrivacyPolicy);
-        term=findViewById(R.id.txtTermsConditions);
+        privacy = findViewById(R.id.txtPrivacyPolicy);
+        term = findViewById(R.id.txtTermsConditions);
+        signupProgressBar = findViewById(R.id.signupProgressBar);
 
+        getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE);
 
-        privacy.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                Intent i = new Intent(Signup_Activity.this,PrivacyPolicyActivity.class);
-                startActivity(i);
-            }
-        });
-        term.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                Intent i = new Intent(Signup_Activity.this,TermsConditionsActivity.class);
-                startActivity(i);
-            }
-        });
+        // Spinner: Gender
+        String[] genders = {"Select Gender", "Male", "Female"};
+        ArrayAdapter<String> genderAdapter = new ArrayAdapter<>(this, R.layout.spinner_item, genders);
+        genderAdapter.setDropDownViewResource(R.layout.spinner_dropdown_item);
+        genderSpinner.setAdapter(genderAdapter);
 
-        // Spinner setup
-        String[] vehicleTypes = {"SUV", "Sedan", "Auto", "Bike", "Ambulance"};
-        ArrayAdapter<String> adapter = new ArrayAdapter<>(
-                this,
-                R.layout.spinner_item,
-                vehicleTypes
-        );
-        adapter.setDropDownViewResource(R.layout.spinner_dropdown_item);
-        vehicleSpinner.setAdapter(adapter);
+        // Privacy Policy click
+        privacy.setOnClickListener(view -> startActivity(new Intent(Signup_Activity.this, PrivacyPolicyActivity.class)));
 
-        // Sign Up
+        // Terms & Conditions click
+        term.setOnClickListener(view -> startActivity(new Intent(Signup_Activity.this, TermsConditionsActivity.class)));
+
+        // Signup button click
         signupBtn.setOnClickListener(v -> registerDriver());
 
-        // Redirect to Login
+        // Login redirect click
         loginRedirectBtn.setOnClickListener(v -> {
-            Intent intent = new Intent(Signup_Activity.this, Login_Activity.class);
-            startActivity(intent);
+            startActivity(new Intent(Signup_Activity.this, Login_Activity.class));
             overridePendingTransition(R.anim.slide_in_left, R.anim.slide_out_right);
             finish();
         });
     }
 
     private void registerDriver() {
-        String fullName = fullNameInput.getText().toString().trim();
-        String vehicleNumber = vehicleNumberInput.getText().toString().trim();
+        String firstName = firstNameInput.getText().toString().trim();
+        String lastName = lastNameInput.getText().toString().trim();
         String phone = phoneInput.getText().toString().trim();
-        String dlNumber = dlNumberInput.getText().toString().trim();
         String email = emailInput.getText().toString().trim();
         String password = passwordInput.getText().toString().trim();
-        String vehicle = vehicleSpinner.getSelectedItem().toString();
+        int genderPosition = genderSpinner.getSelectedItemPosition();
+
+        boolean hasError = false;
 
         // Validation
-        if (TextUtils.isEmpty(fullName)) {
-            fullNameInput.setError("Full name required");
-            return;
+        if (TextUtils.isEmpty(firstName)) {
+            firstNameInput.setError("First name required");
+            hasError = true;
         }
-        if (TextUtils.isEmpty(vehicleNumber)) {
-            vehicleNumberInput.setError("Vehicle number required");
-            return;
+
+        if (TextUtils.isEmpty(lastName)) {
+            lastNameInput.setError("Last name required");
+            hasError = true;
         }
+
         if (phone.length() != 10) {
             phoneInput.setError("Enter valid 10 digit number");
-            return;
+            hasError = true;
         }
-        if (TextUtils.isEmpty(dlNumber)) {
-            dlNumberInput.setError("DL number required");
-            return;
-        }
+
         if (!Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
             emailInput.setError("Enter valid email");
-            return;
+            hasError = true;
         }
-        if (password.length() < 7) {
-            passwordInput.setError("Password must be at least 6 chars");
-            return;
+
+        if (password.length() < 8) {
+            passwordInput.setError("Password must be at least 8 chars");
+            hasError = true;
         }
+
+        if (genderPosition == 0) {
+            Toast.makeText(this, "Please select gender", Toast.LENGTH_SHORT).show();
+            hasError = true;
+        }
+
+        if (hasError) return;
+
+        // Show progress bar
+        signupProgressBar.setVisibility(View.VISIBLE);
+        signupBtn.setEnabled(false);
+
+        String gender = genderSpinner.getSelectedItem().toString();
 
         // Firebase Auth
         auth.createUserWithEmailAndPassword(email, password)
                 .addOnCompleteListener(Signup_Activity.this, task -> {
+                    signupProgressBar.setVisibility(View.GONE);
+                    signupBtn.setEnabled(true);
+
                     if (task.isSuccessful()) {
                         String uid = auth.getCurrentUser().getUid();
 
-                        // Driver static info
                         HashMap<String, Object> driverInfo = new HashMap<>();
-                        driverInfo.put("fullName", fullName);
-                        driverInfo.put("vehicleNumber", vehicleNumber);
+                        driverInfo.put("firstName", firstName);
+                        driverInfo.put("lastName", lastName);
                         driverInfo.put("phone", phone);
-                        driverInfo.put("dlNumber", dlNumber);
                         driverInfo.put("email", email);
-                        driverInfo.put("vehicleType", vehicle);
+                        driverInfo.put("gender", gender);
 
-                        // Driver dynamic info
                         HashMap<String, Object> driverStatus = new HashMap<>();
                         driverStatus.put("currentLat", 0);
                         driverStatus.put("currentLng", 0);
                         driverStatus.put("status", "available");
 
-                        // Combine under structured node
                         HashMap<String, Object> driverData = new HashMap<>();
                         driverData.put("info", driverInfo);
                         driverData.put("status", driverStatus);
 
-                        // Save in Firebase
                         driverRef.child(uid).updateChildren(driverData)
                                 .addOnCompleteListener(task1 -> {
                                     if (task1.isSuccessful()) {
-                                        startActivity(new Intent(Signup_Activity.this, Login_Activity.class));
-                                        overridePendingTransition(R.anim.slide_in_left, R.anim.slide_out_right);
+                                        Toast.makeText(this, "Signup Successful!", Toast.LENGTH_SHORT).show();
+                                        startActivity(new Intent(Signup_Activity.this, RegistrationActivity.class));
+                                        overridePendingTransition(R.anim.slide_in_right, R.anim.slide_out_left);
                                         finish();
                                     } else {
-                                        emailInput.setError("Signup failed: " + task1.getException().getMessage());
+                                        Toast.makeText(this, "Signup failed: " + task1.getException().getMessage(), Toast.LENGTH_LONG).show();
                                     }
                                 });
 
                     } else {
-                        emailInput.setError("Signup failed: " + task.getException().getMessage());
+                        Toast.makeText(this, "Signup failed: " + task.getException().getMessage(), Toast.LENGTH_LONG).show();
                     }
                 });
     }

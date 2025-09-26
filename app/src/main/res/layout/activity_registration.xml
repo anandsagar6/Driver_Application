@@ -1,0 +1,173 @@
+<ScrollView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:fillViewport="true"
+    android:background="@color/white"
+    android:fitsSystemWindows="true"
+    tools:context=".RegistrationActivity">
+
+
+<LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:padding="16dp">
+
+        <!-- Greeting Text -->
+        <TextView
+            android:id="@+id/tvGreeting"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="Hello Driver"
+            android:textSize="28sp"
+            android:layout_gravity="center"
+            android:gravity="center"
+            android:layout_marginTop="10dp"
+            android:fontFamily="@font/amaranth"
+            android:textStyle="bold"
+            android:textColor="@color/text"
+            android:layout_marginBottom="12dp" />
+
+        <!-- Gender Image -->
+        <ImageView
+            android:id="@+id/genderImageView"
+            android:layout_width="100dp"
+            android:layout_height="100dp"
+            android:scaleType="fitXY"
+            android:src="@drawable/male"
+            android:layout_marginRight="40dp"
+            android:contentDescription="Gender Image"
+            android:padding="1dp" />
+
+    </LinearLayout>
+
+
+    <ImageView
+        android:id="@+id/imageViewBanner"
+        android:layout_width="80dp"
+        android:layout_height="80dp"
+        android:scaleType="fitXY"
+        android:layout_marginTop="15dp"
+        android:layout_gravity="center"
+        android:src="@drawable/driver_registration" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:orientation="vertical"
+            android:layout_gravity="center"
+            android:layout_marginLeft="24dp"
+            android:layout_marginRight="24dp"
+            >
+
+
+
+
+
+            <!-- Vehicle Type Spinner -->
+            <Spinner
+                android:id="@+id/vehicleTypeSpinner"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="@drawable/spinner_bg"
+                android:layout_marginTop="10dp"
+                android:padding="12dp"/>
+
+            <Spinner
+                android:id="@+id/vehicleEmissionSpinner"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                android:background="@drawable/spinner_bg"
+                android:padding="12dp" />
+
+
+            <!-- Vehicle Model -->
+            <EditText
+                android:id="@+id/vehicleModelInput"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="Vehicle Model"
+                android:textColor="@color/black"
+                android:textColorHint="@color/colorTextsecond"
+                android:background="@drawable/bg_edittex"
+                android:padding="12dp"
+                android:layout_marginTop="10dp"/>
+
+            <!-- Vehicle Color -->
+            <EditText
+                android:id="@+id/vehicleColorInput"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="Vehicle Color"
+                android:textColor="@color/black"
+                android:textColorHint="@color/colorTextsecond"
+                android:background="@drawable/bg_edittex"
+                android:padding="12dp"
+                android:layout_marginTop="10dp"/>
+
+            <!-- Vehicle Number -->
+            <EditText
+                android:id="@+id/vehicleNumberInput"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="Vehicle Number"
+                android:textColor="@color/black"
+                android:textColorHint="@color/colorTextsecond"
+                android:background="@drawable/bg_edittex"
+                android:padding="12dp"
+                android:layout_marginTop="10dp"/>
+
+            <!-- Driving License -->
+            <EditText
+                android:id="@+id/dlNumberInput"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="Driving License Number"
+                android:textColor="@color/black"
+                android:textColorHint="@color/colorTextsecond"
+                android:background="@drawable/bg_edittex"
+                android:padding="12dp"
+                android:layout_marginTop="10dp"/>
+
+
+
+            <!-- Register Button -->
+            <Button
+                android:id="@+id/registerBtn"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Register"
+                android:textStyle="bold"
+                android:textColor="@color/white"
+                android:background="@drawable/btn_bg"
+                android:layout_marginTop="20dp"
+                android:padding="14dp" />
+
+            <TextView
+                android:id="@+id/loginRedirectBtn"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Registration is compulsory !!!"
+                android:textColor="#FF0000"
+                android:textStyle="bold"
+                android:textSize="16sp"
+                android:layout_marginTop="16dp"
+                android:layout_gravity="center_horizontal" />
+
+
+        </LinearLayout>
+
+    </LinearLayout>
+</ScrollView>

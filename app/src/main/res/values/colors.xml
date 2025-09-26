@@ -16,4 +16,9 @@
     <color name="status_completed">#4CAF50</color>    <!-- Green -->
     <color name="status_accepted">#FF9800</color>    <!-- Orange -->
     <color name="status_cancelled">#F44336</color>   <!-- Red -->
+
+    <color name="nav_item_selector">#000</color>
+    <color name="nav_item_color">#fff</color>
+
+
 </resources>

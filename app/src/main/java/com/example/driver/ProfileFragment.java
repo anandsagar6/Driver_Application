@@ -6,6 +6,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.ImageView;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
@@ -23,9 +24,10 @@ public class ProfileFragment extends Fragment {
 
     private FirebaseAuth auth;
     private DatabaseReference driverRef;
-    Button privacyPolicyBtn, termsConditionsBtn,about_us;
-    private Button btnBack, btnLogout;
+
+    private Button privacyPolicyBtn, termsConditionsBtn, about_us, btnBack, btnLogout;
     private TextView tvName, tvEmail;
+    private ImageView ivProfileImage; // Profile image
     private String driverId;
 
     @Nullable
@@ -44,19 +46,19 @@ public class ProfileFragment extends Fragment {
         // UI
         tvName = view.findViewById(R.id.profileName);
         tvEmail = view.findViewById(R.id.profileEmail);
+        ivProfileImage = view.findViewById(R.id.profileimage); // ImageView in XML
         btnBack = view.findViewById(R.id.profiletodashboard);
         btnLogout = view.findViewById(R.id.logoutBtn);
         about_us = view.findViewById(R.id.About_us);
-        privacyPolicyBtn = view.findViewById(R.id.privacy_policy);          // New
+        privacyPolicyBtn = view.findViewById(R.id.privacy_policy);
         termsConditionsBtn = view.findViewById(R.id.terms_conditions);
 
-        // Load name & email
+        // Load profile info
         fetchProfileInfo();
 
         // Back button
         btnBack.setOnClickListener(v -> {
-            Intent intent = new Intent(getActivity(), DashBoard.class);
-            startActivity(intent);
+            startActivity(new Intent(getActivity(), DashBoard.class));
         });
 
         // Logout button
@@ -68,23 +70,10 @@ public class ProfileFragment extends Fragment {
             requireActivity().finish();
         });
 
-        about_us.setOnClickListener(v -> {
-            Intent intent = new Intent(getActivity(), AboutUsActivity.class);
-            startActivity(intent);
-            requireActivity().overridePendingTransition(R.anim.zoom_in, R.anim.zoom_out);
-        });
-
-        privacyPolicyBtn.setOnClickListener(v -> {
-            Intent intent = new Intent(getActivity(), PrivacyPolicyActivity.class);
-            startActivity(intent);
-            requireActivity().overridePendingTransition(R.anim.zoom_in, R.anim.zoom_out);
-        });
-
-        termsConditionsBtn.setOnClickListener(v -> {
-            Intent intent = new Intent(getActivity(), TermsConditionsActivity.class);
-            startActivity(intent);
-            requireActivity().overridePendingTransition(R.anim.zoom_in, R.anim.zoom_out);
-        });
+        // Other buttons
+        about_us.setOnClickListener(v -> startActivity(new Intent(getActivity(), AboutUsActivity.class)));
+        privacyPolicyBtn.setOnClickListener(v -> startActivity(new Intent(getActivity(), PrivacyPolicyActivity.class)));
+        termsConditionsBtn.setOnClickListener(v -> startActivity(new Intent(getActivity(), TermsConditionsActivity.class)));
 
         return view;
     }
@@ -94,11 +83,25 @@ public class ProfileFragment extends Fragment {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
                 if (snapshot.exists()) {
-                    String name = snapshot.child("fullName").getValue(String.class);
+                    String firstName = snapshot.child("firstName").getValue(String.class);
                     String email = snapshot.child("email").getValue(String.class);
+                    String gender = snapshot.child("gender").getValue(String.class);
 
-                    tvName.setText(name != null ? name : "No Name");
+                    tvName.setText(firstName != null ? firstName : "No Name");
                     tvEmail.setText(email != null ? email : "No Email");
+
+                    // Set profile image based on gender
+                    if (gender != null) {
+                        if (gender.equalsIgnoreCase("Male")) {
+                            ivProfileImage.setImageResource(R.drawable.male);
+                        } else if (gender.equalsIgnoreCase("Female")) {
+                            ivProfileImage.setImageResource(R.drawable.female);
+                        } else {
+                            ivProfileImage.setImageResource(R.drawable.user); // fallback
+                        }
+                    } else {
+                        ivProfileImage.setImageResource(R.drawable.user);
+                    }
                 }
             }
 
@@ -106,6 +109,7 @@ public class ProfileFragment extends Fragment {
             public void onCancelled(@NonNull DatabaseError error) {
                 tvName.setText("Error");
                 tvEmail.setText(error.getMessage());
+                ivProfileImage.setImageResource(R.drawable.user);
             }
         });
     }
