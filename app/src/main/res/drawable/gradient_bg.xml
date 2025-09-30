@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="rectangle">
+
+    <!-- Horizontal Linear Gradient (Left → Right) -->
+    <gradient
+        android:type="linear"
+        android:angle="0"
+        android:startColor="#9354de"
+        android:centerColor="#7627d7"
+        android:endColor="#7426d6" />
+
+</shape>

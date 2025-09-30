@@ -11,7 +11,7 @@
         android:id="@+id/headerLayout"
         android:layout_width="match_parent"
         android:layout_height="56dp"
-        android:background="@color/text"
+        android:background="#3700b3"
         android:gravity="center"
         android:padding="12dp">
 

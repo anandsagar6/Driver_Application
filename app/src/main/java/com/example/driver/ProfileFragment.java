@@ -67,13 +67,25 @@ public class ProfileFragment extends Fragment {
             Intent intent = new Intent(getActivity(), Login_Activity.class);
             intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
             startActivity(intent);
+            getActivity().overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out);
             requireActivity().finish();
         });
 
         // Other buttons
-        about_us.setOnClickListener(v -> startActivity(new Intent(getActivity(), AboutUsActivity.class)));
-        privacyPolicyBtn.setOnClickListener(v -> startActivity(new Intent(getActivity(), PrivacyPolicyActivity.class)));
-        termsConditionsBtn.setOnClickListener(v -> startActivity(new Intent(getActivity(), TermsConditionsActivity.class)));
+        about_us.setOnClickListener(v -> {
+            startActivity(new Intent(getActivity(), AboutUsActivity.class));
+            getActivity().overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out);
+        });
+
+        privacyPolicyBtn.setOnClickListener(v -> {
+            startActivity(new Intent(getActivity(), PrivacyPolicyActivity.class));
+            getActivity().overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out);
+        });
+
+        termsConditionsBtn.setOnClickListener(v -> {
+            startActivity(new Intent(getActivity(), TermsConditionsActivity.class));
+            getActivity().overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out);
+        });
 
         return view;
     }

@@ -1,9 +1,12 @@
 package com.example.driver;
 
 import android.content.Intent;
+import android.graphics.Color;
+import android.os.Build;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.view.View;
+import android.view.Window;
 import android.view.WindowManager;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
@@ -16,6 +19,7 @@ import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.content.ContextCompat;
 
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
@@ -41,16 +45,50 @@ public class RegistrationActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        // Set blue status bar before setting content
+        setBlueStatusBar();
+
         EdgeToEdge.enable(this);
         setContentView(R.layout.activity_registration);
 
-        // Firebase
+        initializeFirebase();
+        initializeViews();
+        setupSpinners();
+        loadUserData();
+        setupClickListeners();
+
+        getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE);
+    }
+
+    private void setBlueStatusBar() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            Window window = getWindow();
+            window.clearFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS);
+            window.addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS);
+
+            // Try to get color from resources, fallback to hex color
+            try {
+                window.setStatusBarColor(ContextCompat.getColor(this, R.color.status_bar_blue));
+            } catch (Exception e) {
+                window.setStatusBarColor(Color.parseColor("#004FFF"));
+            }
+
+            // Set light status bar icons for better visibility on blue background
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                window.getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR);
+            }
+        }
+    }
+
+    private void initializeFirebase() {
         auth = FirebaseAuth.getInstance();
         driverRef = FirebaseDatabase.getInstance().getReference("drivers");
+    }
 
-        // Views
+    private void initializeViews() {
         bannerImage = findViewById(R.id.imageViewBanner);
-        genderImage = findViewById(R.id.genderImageView); // your ImageView for gender
+        genderImage = findViewById(R.id.genderImageView);
         vehicleTypeSpinner = findViewById(R.id.vehicleTypeSpinner);
         vehicleEmissionSpinner = findViewById(R.id.vehicleEmissionSpinner);
         vehicleModelInput = findViewById(R.id.vehicleModelInput);
@@ -59,10 +97,60 @@ public class RegistrationActivity extends AppCompatActivity {
         dlNumberInput = findViewById(R.id.dlNumberInput);
         registerBtn = findViewById(R.id.registerBtn);
         tvGreeting = findViewById(R.id.tvGreeting);
+    }
 
-        getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE);
+    private void setupSpinners() {
+        // Vehicle type array with default
+        String[] vehicleTypes = {"Select Vehicle Type", "SUV", "Sedan", "Auto", "Bike", "Ambulance"};
+        ArrayAdapter<String> typeAdapter = new ArrayAdapter<>(this, R.layout.spinner_item, vehicleTypes);
+        typeAdapter.setDropDownViewResource(R.layout.spinner_dropdown_item);
+        vehicleTypeSpinner.setAdapter(typeAdapter);
 
-        // Fetch user info (name & gender) from Firebase
+        // Vehicle emission standards array with default
+        String[] emissionStandards = {"Select Emission Standard", "BS4", "BS6"};
+        ArrayAdapter<String> emissionAdapter = new ArrayAdapter<>(this, R.layout.spinner_item, emissionStandards);
+        emissionAdapter.setDropDownViewResource(R.layout.spinner_dropdown_item);
+        vehicleEmissionSpinner.setAdapter(emissionAdapter);
+
+        // Vehicle Type Spinner listener to change banner image
+        vehicleTypeSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                updateBannerImage();
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> parent) {
+                bannerImage.setImageResource(R.drawable.driver_registration);
+            }
+        });
+    }
+
+    private void updateBannerImage() {
+        String selectedVehicle = vehicleTypeSpinner.getSelectedItem().toString();
+        switch (selectedVehicle) {
+            case "SUV":
+                bannerImage.setImageResource(R.drawable.premium);
+                break;
+            case "Sedan":
+                bannerImage.setImageResource(R.drawable.sedan);
+                break;
+            case "Auto":
+                bannerImage.setImageResource(R.drawable.auto);
+                break;
+            case "Bike":
+                bannerImage.setImageResource(R.drawable.bike);
+                break;
+            case "Ambulance":
+                bannerImage.setImageResource(R.drawable.amblance);
+                break;
+            default:
+                bannerImage.setImageResource(R.drawable.driver_registration);
+                break;
+        }
+    }
+
+    private void loadUserData() {
         FirebaseUser currentUser = auth.getCurrentUser();
         if (currentUser != null) {
             String uid = currentUser.getUid();
@@ -94,73 +182,18 @@ public class RegistrationActivity extends AppCompatActivity {
                         }
                     });
         }
+    }
 
-        // Vehicle type array with default
-        String[] vehicleTypes = {"Select Vehicle Type", "SUV", "Sedan", "Auto", "Bike", "Ambulance"};
-        ArrayAdapter<String> typeAdapter = new ArrayAdapter<>(this, R.layout.spinner_item, vehicleTypes);
-        typeAdapter.setDropDownViewResource(R.layout.spinner_dropdown_item);
-        vehicleTypeSpinner.setAdapter(typeAdapter);
-
-        // Vehicle emission standards array with default
-        String[] emissionStandards = {"Select Emission Standard", "BS4", "BS6"};
-        ArrayAdapter<String> emissionAdapter = new ArrayAdapter<>(this, R.layout.spinner_item, emissionStandards);
-        emissionAdapter.setDropDownViewResource(R.layout.spinner_dropdown_item);
-        vehicleEmissionSpinner.setAdapter(emissionAdapter);
-
-        // Vehicle Type Spinner listener to change banner image
-        vehicleTypeSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
-            @Override
-            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-                String selectedVehicle = vehicleTypeSpinner.getSelectedItem().toString();
-                switch (selectedVehicle) {
-                    case "SUV":
-                        bannerImage.setImageResource(R.drawable.premium);
-                        break;
-                    case "Sedan":
-                        bannerImage.setImageResource(R.drawable.sedan);
-                        break;
-                    case "Auto":
-                        bannerImage.setImageResource(R.drawable.auto);
-                        break;
-                    case "Bike":
-                        bannerImage.setImageResource(R.drawable.bike);
-                        break;
-                    case "Ambulance":
-                        bannerImage.setImageResource(R.drawable.amblance);
-                        break;
-                    default:
-                        bannerImage.setImageResource(R.drawable.driver_registration);
-                        break;
-                }
-            }
-
-            @Override
-            public void onNothingSelected(AdapterView<?> parent) {
-                bannerImage.setImageResource(R.drawable.driver_registration);
-            }
-        });
-
-        // Register button click
+    private void setupClickListeners() {
         registerBtn.setOnClickListener(v -> saveVehicleDetails());
     }
 
     private void saveVehicleDetails() {
+        if (!validateInputs()) {
+            return;
+        }
+
         String uid = auth.getCurrentUser().getUid();
-
-        int vehicleTypePosition = vehicleTypeSpinner.getSelectedItemPosition();
-        int emissionPosition = vehicleEmissionSpinner.getSelectedItemPosition();
-
-        // Spinner validation
-        if (vehicleTypePosition == 0) {
-            Toast.makeText(this, "Please select vehicle type", Toast.LENGTH_SHORT).show();
-            return;
-        }
-        if (emissionPosition == 0) {
-            Toast.makeText(this, "Please select emission standard", Toast.LENGTH_SHORT).show();
-            return;
-        }
-
-        // Get values
         String vehicleType = vehicleTypeSpinner.getSelectedItem().toString();
         String emissionStandard = vehicleEmissionSpinner.getSelectedItem().toString();
         String vehicleModel = vehicleModelInput.getText().toString().trim();
@@ -168,25 +201,10 @@ public class RegistrationActivity extends AppCompatActivity {
         String vehicleNumber = vehicleNumberInput.getText().toString().trim();
         String dlNumber = dlNumberInput.getText().toString().trim();
 
-        // EditText validation
-        if (TextUtils.isEmpty(vehicleModel)) {
-            vehicleModelInput.setError("Enter vehicle model");
-            return;
-        }
-        if (TextUtils.isEmpty(vehicleColor)) {
-            vehicleColorInput.setError("Enter vehicle color");
-            return;
-        }
-        if (TextUtils.isEmpty(vehicleNumber)) {
-            vehicleNumberInput.setError("Enter vehicle number");
-            return;
-        }
-        if (TextUtils.isEmpty(dlNumber)) {
-            dlNumberInput.setError("Enter DL number");
-            return;
-        }
+        // Show loading state
+        registerBtn.setEnabled(false);
+        registerBtn.setText("Registering...");
 
-        // Save vehicle info under "info" node
         HashMap<String, Object> vehicleInfo = new HashMap<>();
         vehicleInfo.put("vehicleType", vehicleType);
         vehicleInfo.put("vehicleModel", vehicleModel);
@@ -198,13 +216,70 @@ public class RegistrationActivity extends AppCompatActivity {
 
         driverRef.child(uid).child("info").updateChildren(vehicleInfo)
                 .addOnCompleteListener(task -> {
+                    // Reset button state
+                    registerBtn.setEnabled(true);
+                    registerBtn.setText("REGISTER VEHICLE");
+
                     if (task.isSuccessful()) {
                         Toast.makeText(RegistrationActivity.this, "Vehicle Registered Successfully!", Toast.LENGTH_SHORT).show();
-                        startActivity(new Intent(RegistrationActivity.this, DashBoard.class));
+                        Intent intent = new Intent(RegistrationActivity.this, DashBoard.class);
+                        intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
+                        startActivity(intent);
+                        overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out);
                         finish();
                     } else {
-                        Toast.makeText(RegistrationActivity.this, "Error: " + task.getException().getMessage(), Toast.LENGTH_SHORT).show();
+                        String errorMessage = "Registration failed";
+                        if (task.getException() != null) {
+                            errorMessage = task.getException().getMessage();
+                        }
+                        Toast.makeText(RegistrationActivity.this, "Error: " + errorMessage, Toast.LENGTH_SHORT).show();
                     }
+                })
+                .addOnFailureListener(e -> {
+                    registerBtn.setEnabled(true);
+                    registerBtn.setText("REGISTER VEHICLE");
+                    Toast.makeText(RegistrationActivity.this, "Error: " + e.getMessage(), Toast.LENGTH_SHORT).show();
                 });
+    }
+
+    private boolean validateInputs() {
+        int vehicleTypePosition = vehicleTypeSpinner.getSelectedItemPosition();
+        int emissionPosition = vehicleEmissionSpinner.getSelectedItemPosition();
+
+        // Spinner validation
+        if (vehicleTypePosition == 0) {
+            Toast.makeText(this, "Please select vehicle type", Toast.LENGTH_SHORT).show();
+            return false;
+        }
+        if (emissionPosition == 0) {
+            Toast.makeText(this, "Please select emission standard", Toast.LENGTH_SHORT).show();
+            return false;
+        }
+
+        // EditText validation
+        if (TextUtils.isEmpty(vehicleModelInput.getText().toString().trim())) {
+            vehicleModelInput.setError("Enter vehicle model");
+            return false;
+        }
+        if (TextUtils.isEmpty(vehicleColorInput.getText().toString().trim())) {
+            vehicleColorInput.setError("Enter vehicle color");
+            return false;
+        }
+        if (TextUtils.isEmpty(vehicleNumberInput.getText().toString().trim())) {
+            vehicleNumberInput.setError("Enter vehicle number");
+            return false;
+        }
+        if (TextUtils.isEmpty(dlNumberInput.getText().toString().trim())) {
+            dlNumberInput.setError("Enter DL number");
+            return false;
+        }
+
+        return true;
+    }
+
+    @Override
+    public void onBackPressed() {
+        super.onBackPressed();
+        overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out);
     }
 }

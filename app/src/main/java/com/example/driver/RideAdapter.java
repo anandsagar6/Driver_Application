@@ -41,7 +41,9 @@ public class RideAdapter extends RecyclerView.Adapter<RideAdapter.RideViewHolder
 
         setBoldLabel(holder.tvPickup, "From: ", safe(r.getPickupName()));
         setBoldLabel(holder.tvDrop, "To: ", safe(r.getDropAddress()));
-        setBoldLabel(holder.tvPrice, "Price: ", safe(r.getPrice()));
+
+        // Rider name with bold label
+        setBoldLabel(holder.tvriderName, "Rider: ", safe(r.getRiderName()));
 
         // Date and time
         String dateTime = formatDateTime(safe(r.getBookingDate()), safe(r.getBookingTime()));
@@ -85,7 +87,7 @@ public class RideAdapter extends RecyclerView.Adapter<RideAdapter.RideViewHolder
     }
 
     static class RideViewHolder extends RecyclerView.ViewHolder {
-        TextView tvPickup, tvDrop, tvDateTime, tvPrice, tvStatus;
+        TextView tvPickup, tvDrop, tvDateTime, tvPrice, tvStatus, tvriderName;
         RatingBar ratingBar;
 
         RideViewHolder(@NonNull View itemView) {
@@ -95,15 +97,13 @@ public class RideAdapter extends RecyclerView.Adapter<RideAdapter.RideViewHolder
             tvDateTime = itemView.findViewById(R.id.tvDateTime);
             tvPrice = itemView.findViewById(R.id.tvPrice);
             tvStatus = itemView.findViewById(R.id.tvStatus);
+            tvriderName = itemView.findViewById(R.id.tvriderName);
             ratingBar = itemView.findViewById(R.id.ratingBar);
 
             // Ensure rating bar is not clickable
             ratingBar.setIsIndicator(true);
             ratingBar.setFocusable(false);
             ratingBar.setClickable(false);
-
-
-
         }
     }
 
@@ -119,11 +119,6 @@ public class RideAdapter extends RecyclerView.Adapter<RideAdapter.RideViewHolder
         if (s == null) return "";
         String t = s.trim();
         return t.isEmpty() ? "" : t;
-    }
-
-    // Helper: format location with ellipsis
-    private String formatLocation(String prefix, String location) {
-        return prefix + location;
     }
 
     // Helper: format date and time

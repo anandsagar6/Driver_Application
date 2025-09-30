@@ -20,5 +20,8 @@
     <color name="nav_item_selector">#000</color>
     <color name="nav_item_color">#fff</color>
 
+    <color name="status_bar_blue">#004FFF</color>
+    <color name="primary_blue">#2196F3</color>
+
 
 </resources>
