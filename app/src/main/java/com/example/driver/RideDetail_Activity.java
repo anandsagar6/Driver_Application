@@ -2,10 +2,14 @@ package com.example.driver;
 
 import android.app.AlertDialog;
 import android.content.Intent;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.Color;
+import android.graphics.drawable.BitmapDrawable;
 import android.location.Location;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.os.Handler;
 import android.text.InputFilter;
 import android.text.InputType;
 import android.view.View;
@@ -17,6 +21,7 @@ import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.content.ContextCompat;
 
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.DataSnapshot;
@@ -49,6 +54,8 @@ public class RideDetail_Activity extends AppCompatActivity {
     private MapView osmMap;
     private TextView statusText, pickupText, destText, fareText, distanceText;
     private Button startRideBtn, cancelRideBtn;
+    private static final int DOUBLE_BACK_PRESS_INTERVAL = 2000; // 2 seconds
+    private boolean doubleBackToExitPressedOnce = false;
 
     private DatabaseReference ridesRef, driversRef;
     private String rideId, driverId;
@@ -132,7 +139,7 @@ public class RideDetail_Activity extends AppCompatActivity {
 
                 pickupText.setText("Pickup: " + (pickupName != null ? pickupName : "Unknown"));
                 destText.setText("Drop: " + (dropName != null ? dropName : "Unknown"));
-                fareText.setText("Fare: ₹" + (price != null ? price : "N/A"));
+                fareText.setText("Fare: " + (price != null ? price : "N/A"));
                 statusText.setText("Status: " + (status != null ? status : "N/A"));
 
                 // ✅ Auto-assign driver if not assigned yet
@@ -258,10 +265,10 @@ public class RideDetail_Activity extends AppCompatActivity {
         GeoPoint dest = new GeoPoint(destLat, destLng);
         GeoPoint driver = new GeoPoint(driverLat, driverLng);
 
-        // Add markers
-        if (pickupLat != 0 && pickupLng != 0) addMarker(pickup, "Pickup: " + pickupName);
-        if (destLat != 0 && destLng != 0) addMarker(dest, "Destination: " + dropName);
-        if (driverLat != 0 && driverLng != 0) addMarker(driver, "Driver (You)");
+        // Add markers with custom icons
+        if (pickupLat != 0 && pickupLng != 0) addCustomMarker(pickup, "Pickup: " + pickupName, R.drawable.pickup_location, 120, 120);
+        if (destLat != 0 && destLng != 0) addCustomMarker(dest, "Destination: " + dropName, R.drawable.drop_location_icon, 120, 120);
+        if (driverLat != 0 && driverLng != 0) addCustomMarker(driver, "Driver (You)", R.drawable.driver_image, 150, 150);
 
         // Draw route based on ride status
         if ("ongoing".equalsIgnoreCase(status)) {
@@ -273,12 +280,30 @@ public class RideDetail_Activity extends AppCompatActivity {
         osmMap.invalidate();
     }
 
-
     private void addMarker(GeoPoint point, String title) {
         Marker m = new Marker(osmMap);
         m.setPosition(point);
         m.setTitle(title);
         osmMap.getOverlays().add(m);
+    }
+
+    private void addCustomMarker(GeoPoint point, String title, int iconRes, int width, int height) {
+        Marker marker = new Marker(osmMap);
+        marker.setPosition(point);
+        marker.setTitle(title);
+        marker.setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM);
+
+        // Load and resize the icon with null check
+        Bitmap originalBitmap = BitmapFactory.decodeResource(getResources(), iconRes);
+        if (originalBitmap != null) {
+            Bitmap resizedBitmap = Bitmap.createScaledBitmap(originalBitmap, width, height, false);
+            marker.setIcon(new BitmapDrawable(getResources(), resizedBitmap));
+        } else {
+            // Fallback to default marker if icon loading fails
+            marker.setIcon(ContextCompat.getDrawable(this, iconRes));
+        }
+
+        osmMap.getOverlays().add(marker);
     }
 
     private void fetchRoute(GeoPoint start, GeoPoint end) {
@@ -452,18 +477,33 @@ public class RideDetail_Activity extends AppCompatActivity {
 
     private void redirectToDashboard() {
         startActivity(new Intent(this, DashBoard.class));
+        overridePendingTransition(R.anim.fade_in, R.anim.fade_out);
         finish();
     }
 
     @Override
     public void onBackPressed() {
+        // Check if ride is in a final state
         if ("completed".equalsIgnoreCase(status) ||
                 "cancelled_by_driver".equalsIgnoreCase(status) ||
                 "cancelled_by_customer".equalsIgnoreCase(status)) {
             redirectToDashboard();
-        } else {
-            super.onBackPressed();
+            return;
         }
+
+        // Double back press logic for other cases
+        if (doubleBackToExitPressedOnce) {
+            // Second back press - navigate back with animation
+            super.onBackPressed();
+            overridePendingTransition(R.anim.fade_in, R.anim.fade_out);
+            return;
+        }
+
+        this.doubleBackToExitPressedOnce = true;
+        Toast.makeText(this, "Press back again to go back", Toast.LENGTH_SHORT).show();
+
+        // Reset the flag after 2 seconds
+        new Handler().postDelayed(() -> doubleBackToExitPressedOnce = false, DOUBLE_BACK_PRESS_INTERVAL);
     }
 
 

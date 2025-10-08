@@ -119,7 +119,7 @@ public class UserRequest_Fragment extends Fragment {
         tvPrice = view.findViewById(R.id.tvPrice);
         tvDistance = view.findViewById(R.id.tvDistance);
         progressBar = view.findViewById(R.id.progressBar);
-       dimOverlay = view.findViewById(R.id.dimOverlay);
+        dimOverlay = view.findViewById(R.id.dimOverlay);
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(requireActivity());
 
         // OSM Map setup
@@ -259,6 +259,7 @@ public class UserRequest_Fragment extends Fragment {
                             Intent intent = new Intent(getActivity(), RideDetail_Activity.class);
                             intent.putExtra("rideId", currentRideId);
                             startActivity(intent);
+                            requireActivity().overridePendingTransition(R.anim.fade_in, R.anim.fade_out);
                             requireActivity().finish();
                         }
                     }
@@ -404,6 +405,8 @@ public class UserRequest_Fragment extends Fragment {
     }
 
     /** DRIVER MARKER & ROUTES **/
+    /** DRIVER MARKER & ROUTES **/
+    /** DRIVER MARKER & ROUTES **/
     private void driverLocUpdate(@Nullable GeoPoint driverLoc, float bearing) {
         if (osmMap == null) return;
 
@@ -412,40 +415,82 @@ public class UserRequest_Fragment extends Fragment {
 
         // Add pickup marker
         if (pickup != null && pickupMarker == null) {
-            pickupMarker = createMarker(pickup, "Pickup: " + (pickupName != null ? pickupName : ""), R.drawable.pickup_location);
-            osmMap.getOverlays().add(pickupMarker);
+            // Load and resize pickup image with null check
+            Bitmap originalPickupBitmap = BitmapFactory.decodeResource(getResources(), R.drawable.pickup_location);
+            if (originalPickupBitmap != null) {
+                int pickupWidth = 100;
+                int pickupHeight = 100;
+                Bitmap resizedPickupBitmap = Bitmap.createScaledBitmap(originalPickupBitmap, pickupWidth, pickupHeight, false);
+
+                pickupMarker = new Marker(osmMap);
+                pickupMarker.setPosition(pickup);
+                pickupMarker.setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM);
+                pickupMarker.setIcon(new BitmapDrawable(getResources(), resizedPickupBitmap));
+                pickupMarker.setTitle("Pickup: " + (pickupName != null ? pickupName : ""));
+                osmMap.getOverlays().add(pickupMarker);
+            } else {
+                // Fallback: create marker without custom icon
+                pickupMarker = createMarker(pickup, "Pickup: " + (pickupName != null ? pickupName : ""), R.drawable.pickup_location);
+                osmMap.getOverlays().add(pickupMarker);
+            }
         }
 
         // Add destination marker
         if (dest != null && destMarker == null) {
-            destMarker = createMarker(dest, "Destination: " + (dropAddress != null ? dropAddress : ""), R.drawable.drop_location_icon);
-            osmMap.getOverlays().add(destMarker);
+            // Load and resize destination image with null check
+            Bitmap originalDestBitmap = BitmapFactory.decodeResource(getResources(), R.drawable.drop_location_icon);
+            if (originalDestBitmap != null) {
+                int destWidth = 100;
+                int destHeight = 100;
+                Bitmap resizedDestBitmap = Bitmap.createScaledBitmap(originalDestBitmap, destWidth, destHeight, false);
+
+                destMarker = new Marker(osmMap);
+                destMarker.setPosition(dest);
+                destMarker.setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM);
+                destMarker.setIcon(new BitmapDrawable(getResources(), resizedDestBitmap));
+                destMarker.setTitle("Destination: " + (dropAddress != null ? dropAddress : ""));
+                osmMap.getOverlays().add(destMarker);
+            } else {
+                // Fallback: create marker without custom icon
+                destMarker = createMarker(dest, "Destination: " + (dropAddress != null ? dropAddress : ""), R.drawable.drop_location_icon);
+                osmMap.getOverlays().add(destMarker);
+            }
         }
 
-        // Driver marker
+        // Driver marker with null check
         if (driverLoc != null) {
             if (driverMarker == null) {
-                // Load the original driver image
+                // Load the original driver image with null check
                 Bitmap originalBitmap = BitmapFactory.decodeResource(getResources(), R.drawable.driver_image);
+                if (originalBitmap != null) {
+                    int width = 100;
+                    int height = 100;
+                    Bitmap resizedBitmap = Bitmap.createScaledBitmap(originalBitmap, width, height, false);
 
-                // Resize the bitmap (adjust width and height as needed)
-                int width = 200;  // example size
-                int height = 200; // example size
-                Bitmap resizedBitmap = Bitmap.createScaledBitmap(originalBitmap, width, height, false);
+                    // Create the marker
+                    driverMarker = new Marker(osmMap);
+                    driverMarker.setPosition(driverLoc);
+                    driverMarker.setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM);
+                    driverMarker.setIcon(new BitmapDrawable(getResources(), resizedBitmap));
+                    driverMarker.setTitle("Driver (You)");
+                    driverMarker.setRotation(bearing);
 
-                // Create the marker
-                driverMarker = new Marker(osmMap);
-                driverMarker.setPosition(driverLoc);
-                driverMarker.setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM);
-                driverMarker.setIcon(new BitmapDrawable(getResources(), resizedBitmap));
-                driverMarker.setTitle("Driver (You)");
-                driverMarker.setRotation(bearing);
-
-                // Add to map
-                osmMap.getOverlays().add(driverMarker);
-                osmMap.getController().setZoom(15);
-                osmMap.getController().setCenter(driverLoc);
-            }  else {
+                    // Add to map
+                    osmMap.getOverlays().add(driverMarker);
+                    osmMap.getController().setZoom(15);
+                    osmMap.getController().setCenter(driverLoc);
+                } else {
+                    // Fallback for driver marker
+                    driverMarker = new Marker(osmMap);
+                    driverMarker.setPosition(driverLoc);
+                    driverMarker.setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM);
+                    driverMarker.setTitle("Driver (You)");
+                    driverMarker.setRotation(bearing);
+                    osmMap.getOverlays().add(driverMarker);
+                    osmMap.getController().setZoom(15);
+                    osmMap.getController().setCenter(driverLoc);
+                }
+            } else {
                 animateMarkerTo(driverMarker, driverLoc, bearing, MARKER_ANIM_DURATION);
             }
         } else if (pickup != null) {
@@ -524,9 +569,9 @@ public class UserRequest_Fragment extends Fragment {
                         osmMap.invalidate();
 
 
-                            // hide progress & dim overlay smoothly
-                            progressBar.setVisibility(View.GONE);
-                            hideDimOverlay();  // fade-out
+                        // hide progress & dim overlay smoothly
+                        progressBar.setVisibility(View.GONE);
+                        hideDimOverlay();  // fade-out
 
                     });
                 } catch (Exception e) { e.printStackTrace(); }
@@ -558,8 +603,20 @@ public class UserRequest_Fragment extends Fragment {
     }
 
     private float interpolateRotation(float start, float end, float fraction) {
-        float diff = ((end - start + 540) % 360) - 180;
-        return (start + diff * fraction + 360) % 360;
+        // Calculate the shortest path for rotation
+        float normalizedEnd = end % 360;
+        float normalizedStart = start % 360;
+
+        float diff = normalizedEnd - normalizedStart;
+
+        // Take the shortest path (-180 to 180 degrees)
+        if (diff > 180) {
+            diff -= 360;
+        } else if (diff < -180) {
+            diff += 360;
+        }
+
+        return normalizedStart + (diff * fraction);
     }
 
     private void setStyledText(TextView tv, String label, String value) {

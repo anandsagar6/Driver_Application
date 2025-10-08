@@ -4,6 +4,7 @@ import android.content.Intent;
 import android.graphics.Color;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Handler;
 import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
@@ -14,8 +15,15 @@ import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.ContextCompat;
+import androidx.core.view.GravityCompat;
 
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
 
 public class Login_Activity extends AppCompatActivity {
 
@@ -23,6 +31,10 @@ public class Login_Activity extends AppCompatActivity {
     Button loginBtn;
     FirebaseAuth auth;
     TextView signupRedirectBtn, privacy, term;
+    private DatabaseReference driverRef;
+
+    private boolean doubleBackToExitPressedOnce = false;
+    private static final int DOUBLE_BACK_PRESS_INTERVAL = 2000; // 2 seconds
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -36,6 +48,20 @@ public class Login_Activity extends AppCompatActivity {
         initializeViews();
         setupClickListeners();
         setupLoginFunctionality();
+
+        // Initialize Firebase Database reference
+        driverRef = FirebaseDatabase.getInstance().getReference("drivers");
+
+        // Check if user is already logged in but not registered
+        checkExistingUser();
+    }
+
+    private void checkExistingUser() {
+        FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
+        if (currentUser != null) {
+            // User is already logged in, check registration status
+            checkUserRegistrationStatus(currentUser);
+        }
     }
 
     private void setStatusBarColor(int color) {
@@ -119,18 +145,17 @@ public class Login_Activity extends AppCompatActivity {
 
             auth.signInWithEmailAndPassword(email, password)
                     .addOnCompleteListener(task -> {
-                        // Reset button state
-                        loginBtn.setEnabled(true);
-                        loginBtn.setText("LOGIN");
-
                         if (task.isSuccessful()) {
-                            Toast.makeText(this, "Login Successful ✅", Toast.LENGTH_SHORT).show();
-                            Intent intent = new Intent(this, DashBoard.class);
-                            intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
-                            startActivity(intent);
-                            overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out);
-                            finish();
+                            // Login successful, now check registration status
+                            FirebaseUser user = auth.getCurrentUser();
+                            if (user != null) {
+                                checkUserRegistrationStatus(user);
+                            }
                         } else {
+                            // Reset button state on login failure
+                            loginBtn.setEnabled(true);
+                            loginBtn.setText("LOGIN");
+
                             String errorMessage = "Login failed";
                             if (task.getException() != null) {
                                 errorMessage = task.getException().getMessage();
@@ -155,9 +180,81 @@ public class Login_Activity extends AppCompatActivity {
         });
     }
 
+    private void checkUserRegistrationStatus(FirebaseUser user) {
+        String uid = user.getUid();
+
+        // Keep button in loading state while checking registration
+        loginBtn.setEnabled(false);
+        loginBtn.setText("Checking registration...");
+
+        driverRef.child(uid).child("info").child("isRegistered")
+                .addListenerForSingleValueEvent(new ValueEventListener() {
+                    @Override
+                    public void onDataChange(DataSnapshot snapshot) {
+                        // Reset button state
+                        loginBtn.setEnabled(true);
+                        loginBtn.setText("LOGIN");
+
+                        if (snapshot.exists() && Boolean.TRUE.equals(snapshot.getValue(Boolean.class))) {
+                            // User is registered, go to dashboard
+                            Toast.makeText(Login_Activity.this, "Login Successful ✅", Toast.LENGTH_SHORT).show();
+                            navigateToDashboard();
+                        } else {
+                            // User is not registered, go to registration
+                            Toast.makeText(Login_Activity.this, "Login Successful ✅\nPlease complete vehicle registration", Toast.LENGTH_LONG).show();
+                            navigateToRegistration();
+                        }
+                    }
+
+                    @Override
+                    public void onCancelled(DatabaseError error) {
+                        // Reset button state
+                        loginBtn.setEnabled(true);
+                        loginBtn.setText("LOGIN");
+
+                        // On error, assume user needs registration for safety
+                        Toast.makeText(Login_Activity.this, "Login Successful ✅\nPlease complete vehicle registration", Toast.LENGTH_LONG).show();
+                        navigateToRegistration();
+                    }
+                });
+    }
+
+    private void navigateToDashboard() {
+        Intent intent = new Intent(Login_Activity.this, DashBoard.class);
+        intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
+        startActivity(intent);
+        overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out);
+        finish();
+    }
+
+    private void navigateToRegistration() {
+        Intent intent = new Intent(Login_Activity.this, RegistrationActivity.class);
+        intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
+        startActivity(intent);
+        overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out);
+        finish();
+    }
+
     @Override
     public void onBackPressed() {
-        super.onBackPressed();
-        overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out);
+        if (doubleBackToExitPressedOnce) {
+            // Second back press - navigate back with animation
+            super.onBackPressed();
+            overridePendingTransition(R.anim.fade_in, R.anim.fade_out);
+            return;
+        }
+
+        this.doubleBackToExitPressedOnce = true;
+        Toast.makeText(this, "Press back again to go back", Toast.LENGTH_SHORT).show();
+
+        // Reset the flag after 2 seconds
+        new Handler().postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                doubleBackToExitPressedOnce = false;
+            }
+        }, DOUBLE_BACK_PRESS_INTERVAL);
     }
+
+
 }

@@ -1,10 +1,12 @@
 package com.example.driver;
 
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Color;
 import android.os.Build;
 import android.os.Bundle;
 import android.text.TextUtils;
+import android.view.LayoutInflater;
 import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
@@ -18,6 +20,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.ContextCompat;
 
@@ -162,7 +165,7 @@ public class RegistrationActivity extends AppCompatActivity {
                                 String firstName = snapshot.child("firstName").getValue(String.class);
                                 String gender = snapshot.child("gender").getValue(String.class);
 
-                                tvGreeting.setText(firstName != null ? "Hey " + firstName + "!" : "Hello Driver");
+                                tvGreeting.setText(firstName != null ? "Hello " + firstName + "..." : "Hello Driver");
 
                                 // Set gender image
                                 if ("Male".equalsIgnoreCase(gender)) {
@@ -279,7 +282,51 @@ public class RegistrationActivity extends AppCompatActivity {
 
     @Override
     public void onBackPressed() {
-        super.onBackPressed();
-        overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out);
+        // Show custom exit confirmation dialog
+        showCustomExitDialog();
+    }
+
+    private void showCustomExitDialog() {
+        // Inflate custom dialog layout
+        View dialogView = LayoutInflater.from(this).inflate(R.layout.custom_exit_dialog, null);
+
+        // Initialize views from custom layout
+        TextView dialogTitle = dialogView.findViewById(R.id.dialogTitle);
+        TextView dialogMessage = dialogView.findViewById(R.id.dialogMessage);
+        Button btnContinue = dialogView.findViewById(R.id.btnContinue);
+        Button btnExit = dialogView.findViewById(R.id.btnExit);
+
+        // Create alert dialog builder
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setView(dialogView);
+        builder.setCancelable(false); // Prevent dismissal by tapping outside
+
+        // Create and show dialog
+        AlertDialog dialog = builder.create();
+        dialog.show();
+
+        // Set custom background for dialog window
+        if (dialog.getWindow() != null) {
+            dialog.getWindow().setBackgroundDrawableResource(android.R.color.transparent);
+        }
+
+        // Continue Registration button click
+        btnContinue.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                dialog.dismiss();
+                // User chooses to continue registration
+            }
+        });
+
+        // Exit App button click
+        btnExit.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                // Exit the app completely
+                finishAffinity();
+                System.exit(0);
+            }
+        });
     }
 }

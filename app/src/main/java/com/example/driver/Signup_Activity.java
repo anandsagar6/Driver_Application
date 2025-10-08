@@ -4,6 +4,7 @@ import android.content.Intent;
 import android.graphics.Color;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Handler;
 import android.text.TextUtils;
 import android.util.Patterns;
 import android.view.View;
@@ -19,6 +20,7 @@ import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.ContextCompat;
+import androidx.core.view.GravityCompat;
 
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.DatabaseReference;
@@ -32,6 +34,9 @@ public class Signup_Activity extends AppCompatActivity {
     private Spinner genderSpinner;
     private Button signupBtn;
     private TextView loginRedirectBtn, privacy, term;
+
+    private boolean doubleBackToExitPressedOnce = false;
+    private static final int DOUBLE_BACK_PRESS_INTERVAL = 2000; // 2 seconds
     private ProgressBar signupProgressBar;
 
     private FirebaseAuth auth;
@@ -254,7 +259,22 @@ public class Signup_Activity extends AppCompatActivity {
 
     @Override
     public void onBackPressed() {
-        super.onBackPressed();
-        overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out);
+        if (doubleBackToExitPressedOnce) {
+            // Second back press - navigate back with animation
+            super.onBackPressed();
+            overridePendingTransition(R.anim.fade_in, R.anim.fade_out);
+            return;
+        }
+
+        this.doubleBackToExitPressedOnce = true;
+        Toast.makeText(this, "Press back again to go back", Toast.LENGTH_SHORT).show();
+
+        // Reset the flag after 2 seconds
+        new Handler().postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                doubleBackToExitPressedOnce = false;
+            }
+        }, DOUBLE_BACK_PRESS_INTERVAL);
     }
 }

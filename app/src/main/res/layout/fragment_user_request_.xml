@@ -17,16 +17,17 @@
         <!-- Map Card -->
         <androidx.cardview.widget.CardView
             android:layout_width="match_parent"
-            android:layout_height="400dp"
+            android:layout_height="370dp"
             android:layout_margin="10dp"
-            app:cardCornerRadius="20sp"
-            android:elevation="4dp"
+            app:cardCornerRadius="15sp"
+            android:elevation="2dp"
             android:outlineSpotShadowColor="@color/black">
 
             <org.osmdroid.views.MapView
                 android:id="@+id/osmMap"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
+                android:background="@drawable/bg_card"
                 android:clickable="true" />
         </androidx.cardview.widget.CardView>
 
@@ -38,13 +39,14 @@
             android:layout_marginTop="5dp"
             android:background="@drawable/bg_card"
             android:elevation="4dp"
+            android:layout_marginStart="10dp"
+            android:layout_marginEnd="10dp"
             android:padding="10dp">
 
             <TextView
                 android:id="@+id/tvRideType"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Ride Type:"
                 android:textColor="#000000"
                 android:textSize="16sp"
                 android:paddingBottom="4dp" />
@@ -53,7 +55,6 @@
                 android:id="@+id/tvPickup"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Pickup:"
                 android:textColor="#000000"
                 android:textSize="16sp"
                 android:paddingBottom="4dp" />
@@ -62,7 +63,7 @@
                 android:id="@+id/tvDestination"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Destination: "
+
                 android:textColor="#000000"
                 android:textSize="16sp"
                 android:paddingBottom="4dp" />
@@ -71,7 +72,6 @@
                 android:id="@+id/tvPrice"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Price: "
                 android:textStyle="bold"
                 android:textColor="#4CAF50"
                 android:textSize="16sp"
@@ -81,52 +81,52 @@
                 android:id="@+id/tvDistance"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Distance to Pickup: "
                 android:textColor="#000000"
                 android:textSize="16sp" />
         </LinearLayout>
 
         <!-- Buttons Row -->
         <LinearLayout
+            xmlns:android="http://schemas.android.com/apk/res/android"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
             android:gravity="center"
-            android:padding="20dp"
-            android:layout_marginBottom="20dp"
-            android:weightSum="3">
+            android:layout_marginTop="10dp"
+            android:paddingHorizontal="16dp"
+            android:weightSum="2">
 
             <Button
                 android:id="@+id/btnReject"
                 android:layout_width="0dp"
-                android:layout_height="60dp"
-                android:layout_weight="1.5"
+                android:layout_height="55dp"
+                android:layout_weight="1"
                 android:text="Reject"
                 android:textColor="#FFFFFF"
                 android:textStyle="bold"
+                android:layout_margin="20dp"
                 android:textSize="16sp"
                 android:background="@drawable/btn_reject_bg"
                 android:elevation="4dp"
-                android:layout_marginEnd="10dp"
-                android:layout_margin="20dp"
+                android:layout_marginEnd="8dp"
                 android:theme="@style/NoButtonTintTheme" />
 
             <Button
                 android:id="@+id/btnAccept"
                 android:layout_width="0dp"
                 android:layout_height="55dp"
-                android:layout_weight="1.5"
+                android:layout_weight="1"
                 android:text="Accept"
                 android:textColor="#FFFFFF"
                 android:textStyle="bold"
                 android:textSize="16sp"
-                android:layout_margin="20dp"
                 android:background="@drawable/btn_accept_bg"
                 android:elevation="4dp"
-                android:layout_marginStart="10dp"
+                android:layout_marginStart="8dp"
                 android:theme="@style/NoButtonTintTheme" />
 
         </LinearLayout>
+
     </LinearLayout>
 
     <!-- Fullscreen dim overlay -->
