@@ -23,5 +23,8 @@
     <color name="status_bar_blue">#004FFF</color>
     <color name="primary_blue">#2196F3</color>
 
+    <color name="bottom_nav_bg">#FFFFFF</color>   <!-- White -->
+    <color name="bottom_nav_item">#000000</color> <!-- Black text/icons -->
+
 
 </resources>

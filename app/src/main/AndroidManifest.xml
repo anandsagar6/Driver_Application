@@ -18,6 +18,9 @@
         android:theme="@style/Theme.Driver"
         tools:targetApi="31">
         <activity
+            android:name=".DeleteAccountActivity"
+            android:exported="false" />
+        <activity
             android:name=".RegistrationActivity"
             android:exported="false" />
         <activity
@@ -51,8 +54,8 @@
         <activity
             android:name=".Signup_Activity"
             android:exported="false"
-            android:windowSoftInputMode="adjustResize|stateHidden"
-            android:theme="@style/Theme.Driver"/>
+            android:theme="@style/Theme.Driver"
+            android:windowSoftInputMode="adjustResize|stateHidden" />
         <activity
             android:name=".MainActivity"
             android:exported="false" />

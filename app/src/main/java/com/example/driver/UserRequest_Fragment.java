@@ -4,8 +4,11 @@ import android.Manifest;
 import android.animation.ValueAnimator;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.graphics.Typeface;
+import android.graphics.drawable.BitmapDrawable;
 import android.location.Location;
 import android.os.Bundle;
 import android.os.Looper;
@@ -422,12 +425,27 @@ public class UserRequest_Fragment extends Fragment {
         // Driver marker
         if (driverLoc != null) {
             if (driverMarker == null) {
-                driverMarker = createMarker(driverLoc, "Driver (You)", R.drawable.driver_location_icon);
+                // Load the original driver image
+                Bitmap originalBitmap = BitmapFactory.decodeResource(getResources(), R.drawable.driver_image);
+
+                // Resize the bitmap (adjust width and height as needed)
+                int width = 200;  // example size
+                int height = 200; // example size
+                Bitmap resizedBitmap = Bitmap.createScaledBitmap(originalBitmap, width, height, false);
+
+                // Create the marker
+                driverMarker = new Marker(osmMap);
+                driverMarker.setPosition(driverLoc);
+                driverMarker.setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM);
+                driverMarker.setIcon(new BitmapDrawable(getResources(), resizedBitmap));
+                driverMarker.setTitle("Driver (You)");
                 driverMarker.setRotation(bearing);
+
+                // Add to map
                 osmMap.getOverlays().add(driverMarker);
                 osmMap.getController().setZoom(15);
                 osmMap.getController().setCenter(driverLoc);
-            } else {
+            }  else {
                 animateMarkerTo(driverMarker, driverLoc, bearing, MARKER_ANIM_DURATION);
             }
         } else if (pickup != null) {

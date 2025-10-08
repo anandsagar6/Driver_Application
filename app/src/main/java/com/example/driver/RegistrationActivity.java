@@ -142,7 +142,7 @@ public class RegistrationActivity extends AppCompatActivity {
                 bannerImage.setImageResource(R.drawable.bike);
                 break;
             case "Ambulance":
-                bannerImage.setImageResource(R.drawable.amblance);
+                bannerImage.setImageResource(R.drawable.ambulance);
                 break;
             default:
                 bannerImage.setImageResource(R.drawable.driver_registration);

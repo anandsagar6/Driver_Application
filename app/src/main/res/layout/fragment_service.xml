@@ -19,7 +19,7 @@
             android:textSize="24sp"
             android:fontFamily="@font/amaranth"
             android:textStyle="bold"
-            android:textColor="@color/black"
+            android:textColor="@color/text"
             android:layout_gravity="center"
             android:layout_marginBottom="16dp"/>
 
@@ -56,7 +56,7 @@
                     android:layout_height="wrap_content"
                     android:text="Moto"
                     android:textStyle="bold"
-                    android:textColor="@color/black"
+                    android:textColor="@color/text"
                     android:textSize="16sp"
                     android:layout_marginTop="8dp"/>
             </LinearLayout>
@@ -84,7 +84,7 @@
                     android:layout_height="wrap_content"
                     android:text="Sedan"
                     android:textStyle="bold"
-                    android:textColor="@color/black"
+                    android:textColor="@color/text"
                     android:textSize="16sp"
                     android:layout_marginTop="8dp"/>
             </LinearLayout>
@@ -112,7 +112,7 @@
                     android:layout_height="wrap_content"
                     android:text="Auto"
                     android:textStyle="bold"
-                    android:textColor="@color/black"
+                    android:textColor="@color/text"
                     android:textSize="16sp"
                     android:layout_marginTop="8dp"/>
             </LinearLayout>
@@ -140,7 +140,7 @@
                     android:layout_height="wrap_content"
                     android:text="Premium"
                     android:textStyle="bold"
-                    android:textColor="@color/black"
+                    android:textColor="@color/text"
                     android:textSize="16sp"
                     android:layout_marginTop="8dp"/>
             </LinearLayout>
@@ -160,7 +160,7 @@
                 <ImageView
                     android:layout_width="60dp"
                     android:layout_height="60dp"
-                    android:src="@drawable/amblance"
+                    android:src="@drawable/ambulance"
                     android:contentDescription="Ambulance" />
 
                 <TextView
@@ -168,7 +168,7 @@
                     android:layout_height="wrap_content"
                     android:text="Ambulance"
                     android:textStyle="bold"
-                    android:textColor="@color/black"
+                    android:textColor="@color/text"
                     android:textSize="16sp"
                     android:layout_marginTop="8dp"/>
             </LinearLayout>

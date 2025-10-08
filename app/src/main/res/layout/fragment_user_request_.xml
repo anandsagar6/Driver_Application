@@ -92,30 +92,39 @@
             android:layout_height="wrap_content"
             android:orientation="horizontal"
             android:gravity="center"
-            android:layout_margin="10dp"
+            android:padding="20dp"
+            android:layout_marginBottom="20dp"
             android:weightSum="3">
 
             <Button
                 android:id="@+id/btnReject"
                 android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
+                android:layout_height="60dp"
+                android:layout_weight="1.5"
                 android:text="Reject"
                 android:textColor="#FFFFFF"
-                android:backgroundTint="#D50000"
-                android:elevation="4dp" />
+                android:textStyle="bold"
+                android:textSize="16sp"
+                android:background="@drawable/btn_reject_bg"
+                android:elevation="4dp"
+                android:layout_marginEnd="10dp"
+                android:layout_margin="20dp"
+                android:theme="@style/NoButtonTintTheme" />
 
             <Button
                 android:id="@+id/btnAccept"
                 android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
+                android:layout_height="55dp"
+                android:layout_weight="1.5"
                 android:text="Accept"
                 android:textColor="#FFFFFF"
-                android:backgroundTint="#4CAF50"
-                android:layout_marginStart="8dp"
-                android:layout_marginEnd="8dp"
-                android:elevation="4dp" />
+                android:textStyle="bold"
+                android:textSize="16sp"
+                android:layout_margin="20dp"
+                android:background="@drawable/btn_accept_bg"
+                android:elevation="4dp"
+                android:layout_marginStart="10dp"
+                android:theme="@style/NoButtonTintTheme" />
 
         </LinearLayout>
     </LinearLayout>

@@ -25,7 +25,7 @@ public class ProfileFragment extends Fragment {
     private FirebaseAuth auth;
     private DatabaseReference driverRef;
 
-    private Button privacyPolicyBtn, termsConditionsBtn, about_us, btnBack, btnLogout;
+    private Button privacyPolicyBtn, termsConditionsBtn, about_us, deleteAccount, btnLogout;
     private TextView tvName, tvEmail;
     private ImageView ivProfileImage; // Profile image
     private String driverId;
@@ -47,7 +47,7 @@ public class ProfileFragment extends Fragment {
         tvName = view.findViewById(R.id.profileName);
         tvEmail = view.findViewById(R.id.profileEmail);
         ivProfileImage = view.findViewById(R.id.profileimage); // ImageView in XML
-        btnBack = view.findViewById(R.id.profiletodashboard);
+        deleteAccount = view.findViewById(R.id.deleteAccount);
         btnLogout = view.findViewById(R.id.logoutBtn);
         about_us = view.findViewById(R.id.About_us);
         privacyPolicyBtn = view.findViewById(R.id.privacy_policy);
@@ -56,9 +56,12 @@ public class ProfileFragment extends Fragment {
         // Load profile info
         fetchProfileInfo();
 
-        // Back button
-        btnBack.setOnClickListener(v -> {
-            startActivity(new Intent(getActivity(), DashBoard.class));
+        // Delete Account Button
+        deleteAccount.setOnClickListener(v -> {
+            Intent intent = new Intent(getActivity(), DeleteAccountActivity.class);
+            startActivity(intent);
+            requireActivity().overridePendingTransition(R.anim.zoom_in, R.anim.zoom_out);
+
         });
 
         // Logout button

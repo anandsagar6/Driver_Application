@@ -11,8 +11,8 @@
 
     <ImageButton
         android:id="@+id/backButton"
-        android:layout_width="40dp"
-        android:layout_height="40dp"
+        android:layout_width="50dp"
+        android:layout_height="50dp"
         android:background="?attr/selectableItemBackgroundBorderless"
         android:src="@drawable/back_btn"
         android:contentDescription="Back"
@@ -43,7 +43,7 @@
         app:layout_constraintTop_toBottomOf="@id/Title"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        android:layout_marginBottom="30dp"
+        android:layout_marginBottom="40dp"
         app:layout_constraintEnd_toEndOf="parent">
 
         <LinearLayout
@@ -55,20 +55,27 @@
 
 
             <TextView
-                android:id="@+id/aboutDriverDescription"
-                android:layout_width="match_parent"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:textSize="16sp"
+                android:text="Welcome to Rideer Driver App!"
+                android:textStyle="bold"
                 android:textColor="@color/text"
-                android:lineSpacingExtra="4dp"
-                android:text="Welcome to Rideer Driver App!\n\nThe Rideer Driver App is designed to help drivers provide safe, reliable, and efficient ride services. Our mission is to seamlessly connect drivers with riders, ensuring a smooth and profitable experience for all.\n\nKey Features:\n- Accept ride requests quickly and easily\n- Real-time ride tracking and navigation\n- Multiple ride types: Moto, Sedan, Premium, Auto, Ambulance\n- Secure earnings and driver dashboard\n- Personalized notifications and app experience\n\nPayment Information:\n- The Rideer Driver App does not currently process driver payments directly.\n- In the future, secure third-party systems may be integrated for payouts.\n\n⚠ Disclaimer: Rideer is currently in demo mode. While users can book rides and drivers will see ride requests in the app, there are no real drivers in the physical world at this time. This is for testing purposes only.\n\nThank you for partnering with Rideer! We appreciate your commitment to providing excellent ride services.\n\nFor any feedback or inquiries, contact us at: anandsagar0006@gmail.com"
+                android:layout_gravity="center"
+                android:layout_marginTop="10dp"
+
                 />
 
 
-
-
-
             <!-- Made with ❤️ -->
+            <TextView
+                android:id="@+id/aboutDriverDescription"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:lineSpacingExtra="4dp"
+                android:text="\n\nThe Rideer Driver App is designed to help drivers provide safe, reliable, and efficient ride services. Our mission is to seamlessly connect drivers with riders, ensuring a smooth and profitable experience for all.\n\nKey Features:\n- Accept ride requests quickly and easily\n- Real-time ride tracking and navigation\n- Multiple ride types: Moto, Sedan, Premium, Auto, Ambulance\n- Secure earnings and driver dashboard\n- Personalized notifications and app experience\n\nPayment Information:\n- The Rideer Driver App does not currently process driver payments directly.\n- In the future, secure third-party systems may be integrated for payouts.\n\n⚠ Disclaimer: Rideer is currently in demo mode. While users can book rides and drivers will see ride requests in the app, there are no real drivers in the physical world at this time. This is for testing purposes only.\n\nThank you for partnering with Rideer! We appreciate your commitment to providing excellent ride services.\n\nFor any feedback or inquiries, contact us at: anandsagar0006@gmail.com"
+                android:textColor="@color/text"
+                android:textSize="16sp" />
+
             <TextView
                 android:id="@+id/madeWithLove"
                 android:layout_width="wrap_content"
@@ -77,6 +84,7 @@
                 android:textSize="14sp"
                 android:textColor="@color/text"
                 android:layout_gravity="center"
+                android:textStyle="bold"
                 android:layout_marginTop="20dp"/>
 
 

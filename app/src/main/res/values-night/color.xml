@@ -1,0 +1,4 @@
+<resources>
+    <color name="bottom_nav_bg">#000000</color>   <!-- Black -->
+    <color name="bottom_nav_item">#FFFFFF</color> <!-- White text/icons -->
+</resources>

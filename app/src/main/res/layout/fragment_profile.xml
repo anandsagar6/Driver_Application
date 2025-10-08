@@ -172,12 +172,12 @@
                     android:textSize="18sp" />
 
                 <androidx.appcompat.widget.AppCompatButton
-                    android:id="@+id/profiletodashboard"
+                    android:id="@+id/deleteAccount"
                     android:layout_width="match_parent"
                     android:layout_height="60dp"
                     android:layout_margin="16dp"
                     android:background="@drawable/btn_bg"
-                    android:text="Back to main page"
+                    android:text="Delete Account"
                     android:textColor="#ffffff"
                     android:textStyle="bold"
                     android:textSize="18sp" />
