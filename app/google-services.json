@@ -1,0 +1,49 @@
+{
+  "project_info": {
+    "project_number": "826828824851",
+    "firebase_url": "https://rideer-1ba9c-default-rtdb.firebaseio.com",
+    "project_id": "rideer-1ba9c",
+    "storage_bucket": "rideer-1ba9c.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:826828824851:android:7e0600174b684b3aadbae6",
+        "android_client_info": {
+          "package_name": "com.anandsagar.rideer"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCP-k2Fyjk6HntVbpNE07RwMGTtFA14y5k"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:826828824851:android:3f2985d2d031319aadbae6",
+        "android_client_info": {
+          "package_name": "com.anandsagar.rideer_driver"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCP-k2Fyjk6HntVbpNE07RwMGTtFA14y5k"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
