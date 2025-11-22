@@ -129,20 +129,7 @@
 
     </LinearLayout>
 
-    <!-- Fullscreen dim overlay -->
-    <View
-        android:id="@+id/dimOverlay"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:background="#80000000"
-        android:visibility="gone" />
 
-    <!-- Centered ProgressBar -->
-    <ProgressBar
-        android:id="@+id/progressBar"
-        android:layout_width="60dp"
-        android:layout_height="60dp"
-        android:layout_gravity="center"
-        android:visibility="gone" />
+
 
 </FrameLayout>

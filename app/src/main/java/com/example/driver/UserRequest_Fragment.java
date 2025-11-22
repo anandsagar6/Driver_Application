@@ -20,7 +20,6 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.animation.LinearInterpolator;
 import android.widget.Button;
-import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -63,7 +62,6 @@ public class UserRequest_Fragment extends Fragment {
 
     private Button btnAccept, btnReject;
     private TextView tvRideType, tvPickup, tvDestination, tvPrice, tvDistance;
-    private ProgressBar progressBar;
 
     private FirebaseAuth auth;
     private DatabaseReference ridesRef, driversRef;
@@ -85,17 +83,26 @@ public class UserRequest_Fragment extends Fragment {
     private Marker driverMarker, pickupMarker, destMarker;
     private Polyline currentRoute, pickupRoute;
 
-    private float distanceInKm;
-    private View dimOverlay;
-
     private static final long MARKER_ANIM_DURATION = 1000; // ms
+    private static final double AVG_SPEED_KMPH = 25.0;     // for driver → pickup ETA
+
+    // Distance / ETA strings for UI
+    private String pickupDistanceStr = null;  // "2.35 km"
+    private String pickupEtaStr = null;       // "6 min"
+    private String tripDistanceStr = null;    // "225.10 km"
+    private String tripEtaStr = null;         // "5 hr 10 min"
+
+    // Throttle driver->pickup route drawing
+    private long lastPickupRouteRequestTime = 0L;
 
     public UserRequest_Fragment() { }
 
     @Nullable
     @Override
-    public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container,
+    public View onCreateView(@NonNull LayoutInflater inflater,
+                             @Nullable ViewGroup container,
                              @Nullable Bundle savedInstanceState) {
+
         View view = inflater.inflate(R.layout.fragment_user_request_, container, false);
 
         // Firebase
@@ -108,7 +115,9 @@ public class UserRequest_Fragment extends Fragment {
         }
         currentDriverId = driver.getUid();
         ridesRef = FirebaseDatabase.getInstance().getReference("Rides");
-        driversRef = FirebaseDatabase.getInstance().getReference("drivers").child(currentDriverId);
+        driversRef = FirebaseDatabase.getInstance()
+                .getReference("drivers")
+                .child(currentDriverId);
 
         // Bind UI
         btnAccept = view.findViewById(R.id.btnAccept);
@@ -118,8 +127,7 @@ public class UserRequest_Fragment extends Fragment {
         tvDestination = view.findViewById(R.id.tvDestination);
         tvPrice = view.findViewById(R.id.tvPrice);
         tvDistance = view.findViewById(R.id.tvDistance);
-        progressBar = view.findViewById(R.id.progressBar);
-        dimOverlay = view.findViewById(R.id.dimOverlay);
+
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(requireActivity());
 
         // OSM Map setup
@@ -127,28 +135,57 @@ public class UserRequest_Fragment extends Fragment {
         osmMap = view.findViewById(R.id.osmMap);
         osmMap.setTileSource(TileSourceFactory.MAPNIK);
         osmMap.setMultiTouchControls(true);
-        osmMap.getZoomController().setVisibility(org.osmdroid.views.CustomZoomButtonsController.Visibility.NEVER);
+        osmMap.getZoomController().setVisibility(
+                org.osmdroid.views.CustomZoomButtonsController.Visibility.NEVER
+        );
 
+        setupButtons();
         startLocationUpdates();
         listenForRides();
-        setupButtons();
+
+        // Initially: no ride
+        clearRideUI();
 
         return view;
     }
 
-    /** LISTEN FOR WAITING RIDES **/
+    // -------------------------------------------------------------------------
+    // LISTEN FOR WAITING RIDES
+    // -------------------------------------------------------------------------
     private void listenForRides() {
         ridesRef.orderByChild("status").equalTo("waiting")
                 .addValueEventListener(new ValueEventListener() {
                     @Override
                     public void onDataChange(@NonNull DataSnapshot snapshot) {
+
                         if (!snapshot.exists()) {
-                            clearRideUI();
+                            // No waiting rides at all
+                            if (currentRideId != null) {
+                                clearRideUI();
+                            }
                             return;
                         }
 
+                        boolean foundValidRide = false;
+
                         for (DataSnapshot rideSnap : snapshot.getChildren()) {
-                            currentRideId = rideSnap.getKey();
+
+                            String rideId = rideSnap.getKey();
+                            if (rideId == null) continue;
+
+                            String status = rideSnap.child("status").getValue(String.class);
+                            if (status == null || !status.equals("waiting")) continue;
+                            if ("cancelled".equalsIgnoreCase(status)) continue;
+
+                            // If we are already showing this same ride, don't reset UI
+                            if (currentRideId != null && currentRideId.equals(rideId)) {
+                                foundValidRide = true;
+                                break;
+                            }
+
+                            // New ride for driver
+                            currentRideId = rideId;
+
                             rideType = rideSnap.child("rideType").getValue(String.class);
                             pickupLat = rideSnap.child("pickupLat").getValue(Double.class);
                             pickupLng = rideSnap.child("pickupLng").getValue(Double.class);
@@ -158,26 +195,51 @@ public class UserRequest_Fragment extends Fragment {
                             pickupName = rideSnap.child("pickupName").getValue(String.class);
                             dropAddress = rideSnap.child("dropAddress").getValue(String.class);
 
+                            if (pickupLat == null || pickupLng == null ||
+                                    destLat == null || destLng == null) {
+                                // malformed ride, skip
+                                currentRideId = null;
+                                continue;
+                            }
+
+                            // Reset state only for NEW ride
+                            pickupDistanceStr = null;
+                            pickupEtaStr = null;
+                            tripDistanceStr = null;
+                            tripEtaStr = null;
+                            lastPickupRouteRequestTime = 0L;
+
                             updateRideUI();
-                            break; // only first waiting ride
+                            foundValidRide = true;
+                            break; // show only one ride
+                        }
+
+                        // We had a ride but now it's no longer in waiting list
+                        if (!foundValidRide && currentRideId != null) {
+                            clearRideUI();
                         }
                     }
 
                     @Override
                     public void onCancelled(@NonNull DatabaseError error) {
-                        Toast.makeText(getContext(), "Error: " + error.getMessage(), Toast.LENGTH_SHORT).show();
+                        Toast.makeText(getContext(),
+                                "Error: " + error.getMessage(),
+                                Toast.LENGTH_SHORT).show();
                     }
                 });
     }
 
-    /** SETUP BUTTONS **/
+    // -------------------------------------------------------------------------
+    // BUTTONS
+    // -------------------------------------------------------------------------
     private void setupButtons() {
         btnAccept.setOnClickListener(v -> acceptRide());
         btnReject.setOnClickListener(v -> rejectRide());
     }
 
-    /** ACCEPT RIDE **/
-    /** ACCEPT RIDE SAFELY **/
+    // -------------------------------------------------------------------------
+    // ACCEPT RIDE
+    // -------------------------------------------------------------------------
     private void acceptRide() {
         if (currentRideId == null) {
             Toast.makeText(getContext(), "No ride to accept", Toast.LENGTH_SHORT).show();
@@ -186,180 +248,311 @@ public class UserRequest_Fragment extends Fragment {
 
         btnAccept.setEnabled(false);
 
-        ridesRef.child(currentRideId).addListenerForSingleValueEvent(new ValueEventListener() {
-            @Override
-            public void onDataChange(@NonNull DataSnapshot snapshot) {
-                if (!snapshot.exists()) {
-                    Toast.makeText(getContext(), "Ride was cancelled by customer ❌", Toast.LENGTH_SHORT).show();
-                    clearRideUI();
-                    goBackToDashboard();
-                    return;
-                }
-
-                String status = snapshot.child("status").getValue(String.class);
-                String customerId = snapshot.child("customerId").getValue(String.class);
-
-                if (status == null || status.toLowerCase().contains("cancelled") || customerId == null) {
-                    Toast.makeText(getContext(), "Ride cannot be accepted ❌", Toast.LENGTH_SHORT).show();
-                    clearRideUI();
-                    goBackToDashboard();
-                    return;
-                }
-
-                // Get customer info
-                DatabaseReference customerRef = FirebaseDatabase.getInstance().getReference("Customers").child(customerId);
-                customerRef.addListenerForSingleValueEvent(new ValueEventListener() {
+        ridesRef.child(currentRideId)
+                .addListenerForSingleValueEvent(new ValueEventListener() {
                     @Override
-                    public void onDataChange(@NonNull DataSnapshot custSnap) {
-                        String custName = custSnap.child("name").getValue(String.class);
-                        String custPhone = custSnap.child("phone").getValue(String.class);
-                        String bookingDate = snapshot.child("bookingDate").getValue(String.class);
-                        String bookingTime = snapshot.child("bookingTime").getValue(String.class);
+                    public void onDataChange(@NonNull DataSnapshot snapshot) {
+                        if (!snapshot.exists()) {
+                            Toast.makeText(getContext(),
+                                    "Ride was cancelled by customer ❌",
+                                    Toast.LENGTH_SHORT).show();
+                            clearRideUI();
+                            goBackToDashboard();
+                            return;
+                        }
 
-                        // 1️⃣ Update ride status in global "Rides"
-                        DatabaseReference rideRef = ridesRef.child(currentRideId);
-                        rideRef.child("status").setValue("accepted");
-                        rideRef.child("driverId").setValue(currentDriverId);
-                        rideRef.child("driverName").setValue("Anand Sagar"); // or fetch dynamically
-                        rideRef.child("pickupName").setValue(pickupName != null ? pickupName : (pickupLat + ", " + pickupLng));
-                        rideRef.child("dropAddress").setValue(dropAddress != null ? dropAddress : (destLat + ", " + destLng));
+                        String status = snapshot.child("status").getValue(String.class);
+                        String customerId = snapshot.child("customerId").getValue(String.class);
 
-                        // 2️⃣ Update driver's ride entry
-                        DatabaseReference driverRideRef = driversRef.child("rides").child(currentRideId);
-                        driverRideRef.child("rideId").setValue(currentRideId);
-                        driverRideRef.child("customerId").setValue(customerId);
-                        driverRideRef.child("riderName").setValue(custName != null ? custName : "N/A"); // use riderName
-                        driverRideRef.child("riderPhone").setValue(custPhone != null ? custPhone : "N/A");
-                        driverRideRef.child("driverAcceptTime").setValue(getCurrentTime());
-                        driverRideRef.child("pickupName").setValue(pickupName != null ? pickupName : (pickupLat + ", " + pickupLng));
-                        driverRideRef.child("dropAddress").setValue(dropAddress != null ? dropAddress : (destLat + ", " + destLng));
-                        driverRideRef.child("bookingDate").setValue(bookingDate != null ? bookingDate : getCurrentDate());
-                        driverRideRef.child("bookingTime").setValue(bookingTime != null ? bookingTime : getCurrentTime());
-                        driverRideRef.child("price").setValue(price != null ? price : "N/A");
-                        driverRideRef.child("status").setValue("accepted");
+                        if (status == null ||
+                                status.toLowerCase().contains("cancelled") ||
+                                customerId == null) {
 
-                        // 3️⃣ Update driver status
-                        driversRef.child("status").setValue("onRide");
+                            Toast.makeText(getContext(),
+                                    "Ride cannot be accepted ❌",
+                                    Toast.LENGTH_SHORT).show();
+                            clearRideUI();
+                            goBackToDashboard();
+                            return;
+                        }
 
-                        // 4️⃣ Update customer's ride entry
-                        DatabaseReference custRideRef = customerRef.child("rides").child(currentRideId);
-                        custRideRef.child("status").setValue("accepted");
-                        custRideRef.child("pickupName").setValue(pickupName != null ? pickupName : (pickupLat + ", " + pickupLng));
-                        custRideRef.child("dropAddress").setValue(dropAddress != null ? dropAddress : (destLat + ", " + destLng));
-                        custRideRef.child("driverId").setValue(currentDriverId);
-                        custRideRef.child("driverName").setValue("Anand Sagar"); // Or fetch dynamically
-                        custRideRef.child("driverAcceptTime").setValue(getCurrentTime());
-                        custRideRef.child("riderName").setValue(custName != null ? custName : "N/A");
-                        custRideRef.child("riderPhone").setValue(custPhone != null ? custPhone : "N/A");
-                        custRideRef.child("bookingDate").setValue(bookingDate != null ? bookingDate : getCurrentDate());
-                        custRideRef.child("bookingTime").setValue(bookingTime != null ? bookingTime : getCurrentTime());
+                        DatabaseReference customerRef = FirebaseDatabase.getInstance()
+                                .getReference("Customers")
+                                .child(customerId);
 
-                        // 5️⃣ Open RideDetail Activity
-                        if (getActivity() != null && isAdded()) {
-                            Intent intent = new Intent(getActivity(), RideDetail_Activity.class);
-                            intent.putExtra("rideId", currentRideId);
-                            startActivity(intent);
-                            requireActivity().overridePendingTransition(R.anim.fade_in, R.anim.fade_out);
-                            requireActivity().finish();
+                        customerRef.addListenerForSingleValueEvent(new ValueEventListener() {
+                            @Override
+                            public void onDataChange(@NonNull DataSnapshot custSnap) {
+
+                                // Extra safety: if customer ride is already cancelled by system,
+                                // don't allow driver to accept.
+                                String custRideStatus = custSnap.child("rides")
+                                        .child(currentRideId)
+                                        .child("status")
+                                        .getValue(String.class);
+
+                                if ("cancelled_by_system".equalsIgnoreCase(custRideStatus)) {
+                                    Toast.makeText(getContext(),
+                                            "Ride expired (no response from driver) ❌",
+                                            Toast.LENGTH_SHORT).show();
+                                    clearRideUI();
+                                    goBackToDashboard();
+                                    return;
+                                }
+
+                                proceedAcceptRide(snapshot, custSnap, customerRef, customerId);
+                            }
+
+                            @Override
+                            public void onCancelled(@NonNull DatabaseError error) { }
+                        });
+                    }
+
+                    @Override
+                    public void onCancelled(@NonNull DatabaseError error) { }
+                });
+    }
+
+    private void proceedAcceptRide(DataSnapshot rideSnap,
+                                   DataSnapshot custSnap,
+                                   DatabaseReference customerRef,
+                                   String customerId) {
+
+        String custName = custSnap.child("name").getValue(String.class);
+        String custPhone = custSnap.child("phone").getValue(String.class);
+        String bookingDate = rideSnap.child("bookingDate").getValue(String.class);
+        String bookingTime = rideSnap.child("bookingTime").getValue(String.class);
+
+        // 1️⃣ Update global ride
+        DatabaseReference rideRef = ridesRef.child(currentRideId);
+        rideRef.child("status").setValue("accepted");
+        rideRef.child("driverId").setValue(currentDriverId);
+        rideRef.child("driverName").setValue("Anand Sagar"); // or dynamic later
+        rideRef.child("pickupName").setValue(
+                pickupName != null ? pickupName : (pickupLat + ", " + pickupLng));
+        rideRef.child("dropAddress").setValue(
+                dropAddress != null ? dropAddress : (destLat + ", " + destLng));
+
+        // 2️⃣ Update driver's ride entry (only after ACCEPT)
+        DatabaseReference driverRideRef = driversRef.child("rides").child(currentRideId);
+        driverRideRef.child("rideId").setValue(currentRideId);
+        driverRideRef.child("customerId").setValue(customerId);
+        driverRideRef.child("riderName").setValue(custName != null ? custName : "N/A");
+        driverRideRef.child("riderPhone").setValue(custPhone != null ? custPhone : "N/A");
+        driverRideRef.child("driverAcceptTime").setValue(getCurrentTime());
+        driverRideRef.child("pickupName").setValue(
+                pickupName != null ? pickupName : (pickupLat + ", " + pickupLng));
+        driverRideRef.child("dropAddress").setValue(
+                dropAddress != null ? dropAddress : (destLat + ", " + destLng));
+        driverRideRef.child("bookingDate").setValue(
+                bookingDate != null ? bookingDate : getCurrentDate());
+        driverRideRef.child("bookingTime").setValue(
+                bookingTime != null ? bookingTime : getCurrentTime());
+        driverRideRef.child("price").setValue(price != null ? price : "N/A");
+        driverRideRef.child("status").setValue("accepted");
+
+        // 👉 Save distances / ETA ONLY AFTER ACCEPT
+        if (pickupDistanceStr != null)
+            driverRideRef.child("driverToPickupDistance").setValue(pickupDistanceStr);
+        if (pickupEtaStr != null)
+            driverRideRef.child("driverToPickupETA").setValue(pickupEtaStr);
+        if (tripDistanceStr != null)
+            driverRideRef.child("tripDistance").setValue(tripDistanceStr);
+        if (tripEtaStr != null)
+            driverRideRef.child("tripETA").setValue(tripEtaStr);
+
+        // 3️⃣ Driver status
+        driversRef.child("status").setValue("onRide");
+
+        // 4️⃣ Customer ride entry
+        DatabaseReference custRideRef = customerRef.child("rides").child(currentRideId);
+        custRideRef.child("status").setValue("accepted");
+        custRideRef.child("pickupName").setValue(
+                pickupName != null ? pickupName : (pickupLat + ", " + pickupLng));
+        custRideRef.child("dropAddress").setValue(
+                dropAddress != null ? dropAddress : (destLat + ", " + destLng));
+        custRideRef.child("driverId").setValue(currentDriverId);
+        custRideRef.child("driverName").setValue("Anand Sagar");
+        custRideRef.child("driverAcceptTime").setValue(getCurrentTime());
+        custRideRef.child("riderName").setValue(custName != null ? custName : "N/A");
+        custRideRef.child("riderPhone").setValue(custPhone != null ? custPhone : "N/A");
+        custRideRef.child("bookingDate").setValue(
+                bookingDate != null ? bookingDate : getCurrentDate());
+        custRideRef.child("bookingTime").setValue(
+                bookingTime != null ? bookingTime : getCurrentTime());
+
+        // 5️⃣ Open ride detail activity
+        if (getActivity() != null && isAdded()) {
+            Intent intent = new Intent(getActivity(), RideDetail_Activity.class);
+            intent.putExtra("rideId", currentRideId);
+            startActivity(intent);
+            requireActivity().overridePendingTransition(R.anim.fade_in, R.anim.fade_out);
+            requireActivity().finish();
+        }
+    }
+
+    // -------------------------------------------------------------------------
+    // DATE / TIME HELPERS
+    // -------------------------------------------------------------------------
+    private String getCurrentDate() {
+        java.text.SimpleDateFormat sdf =
+                new java.text.SimpleDateFormat("dd-MMM-yyyy");
+        return sdf.format(new java.util.Date());
+    }
+
+    private String getCurrentTime() {
+        java.text.SimpleDateFormat sdf =
+                new java.text.SimpleDateFormat("hh:mm a");
+        return sdf.format(new java.util.Date());
+    }
+
+    // -------------------------------------------------------------------------
+    // REJECT RIDE
+    // -------------------------------------------------------------------------
+    private void rejectRide() {
+        if (currentRideId == null) {
+            Toast.makeText(getContext(), "No ride to reject ❌", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        String rideId = currentRideId;
+        currentRideId = null;
+
+        driversRef.child("status").setValue("available");
+
+        // Mark ride cancelled
+        ridesRef.child(rideId).child("status").setValue("cancelled");
+        ridesRef.child(rideId).child("rejectedDrivers")
+                .child(currentDriverId)
+                .setValue(true);
+
+        // Clean driver node for that ride
+        driversRef.child("rides").child(rideId).removeValue();
+
+        // Update customer's record if exists
+        ridesRef.child(rideId).child("customerId")
+                .addListenerForSingleValueEvent(new ValueEventListener() {
+                    @Override
+                    public void onDataChange(@NonNull DataSnapshot snapshot) {
+                        String customerId = snapshot.getValue(String.class);
+                        if (customerId != null) {
+                            FirebaseDatabase.getInstance().getReference("Customers")
+                                    .child(customerId)
+                                    .child("rides")
+                                    .child(rideId)
+                                    .child("status")
+                                    .setValue("cancelled");
                         }
                     }
 
                     @Override
                     public void onCancelled(@NonNull DatabaseError error) { }
                 });
-            }
-
-            @Override
-            public void onCancelled(@NonNull DatabaseError error) { }
-        });
-    }
-
-    /** Helper: Get current date **/
-    private String getCurrentDate() {
-        java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("dd-MMM-yyyy");
-        return sdf.format(new java.util.Date());
-    }
-
-    /** Helper: Get current time **/
-    private String getCurrentTime() {
-        java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("hh:mm a");
-        return sdf.format(new java.util.Date());
-    }
-
-
-
-
-
-
-
-    /** REJECT RIDE **/
-    private void rejectRide() {
-        if (currentRideId == null) return;
-
-        // Update ride rejected by driver
-        ridesRef.child(currentRideId).child("rejectedDrivers").child(currentDriverId).setValue(true);
-        ridesRef.child(currentRideId).child("status").setValue("cancelled");
-        driversRef.child("rides").child(currentRideId).child("status").setValue("cancelled");
-
-        ridesRef.child(currentRideId).child("customerId").addListenerForSingleValueEvent(new ValueEventListener() {
-            @Override
-            public void onDataChange(@NonNull DataSnapshot snapshot) {
-                String customerId = snapshot.getValue(String.class);
-                if (customerId != null) {
-                    FirebaseDatabase.getInstance().getReference("Customers")
-                            .child(customerId)
-                            .child("rides")
-                            .child(currentRideId)
-                            .child("status")
-                            .setValue("cancelled");
-                }
-            }
-
-            @Override
-            public void onCancelled(@NonNull DatabaseError error) { }
-        });
 
         clearRideUI();
         Toast.makeText(getContext(), "Ride Rejected ❌", Toast.LENGTH_SHORT).show();
+        // Listener is still active → next waiting ride will appear automatically
     }
 
-    /** CLEAR UI AND RESET STATE **/
+    // -------------------------------------------------------------------------
+    // CLEAR UI WHEN NO RIDE
+    // -------------------------------------------------------------------------
     private void clearRideUI() {
-        tvRideType.setText("No Ride Requests");
-        tvPickup.setText("");
-        tvDestination.setText("");
-        tvPrice.setText("");
-        tvDistance.setText("");
+
+        tvRideType.setText("Ride Not Available");
+
+        tvPickup.setVisibility(View.GONE);
+        tvDestination.setVisibility(View.GONE);
+        tvPrice.setVisibility(View.GONE);
+        tvDistance.setVisibility(View.GONE);
+
+        btnAccept.setVisibility(View.GONE);
+        btnReject.setVisibility(View.GONE);
 
         currentRideId = null;
+
         pickupLat = pickupLng = destLat = destLng = null;
-        pickupMarker = destMarker = driverMarker = null;
-        currentRoute = pickupRoute = null;
+        pickupName = dropAddress = rideType = price = null;
+
+        pickupDistanceStr = null;
+        pickupEtaStr = null;
+        tripDistanceStr = null;
+        tripEtaStr = null;
+        lastPickupRouteRequestTime = 0L;
+
+        pickupMarker = null;
+        destMarker = null;
+        currentRoute = null;
+        pickupRoute = null;
 
         if (osmMap != null) {
             osmMap.getOverlays().clear();
             osmMap.invalidate();
         }
 
-        if (driversRef != null) {
-            driversRef.child("status").setValue("available");
+        driversRef.child("status").setValue("available");
+    }
+
+    // -------------------------------------------------------------------------
+    // UPDATE UI WHEN RIDE PRESENT
+    // -------------------------------------------------------------------------
+    private void updateRideUI() {
+
+        // Show all detail views and buttons
+        tvPickup.setVisibility(View.VISIBLE);
+        tvDestination.setVisibility(View.VISIBLE);
+        tvPrice.setVisibility(View.VISIBLE);
+        tvDistance.setVisibility(View.VISIBLE);
+        btnAccept.setVisibility(View.VISIBLE);
+        btnReject.setVisibility(View.VISIBLE);
+
+        setStyledText(tvRideType, "Ride Type:", rideType);
+        setStyledText(tvPickup, "Pickup:", pickupName);
+        setStyledText(tvDestination, "Destination:", dropAddress);
+        setStyledText(tvPrice, "Price:", price);
+
+        // Start with "calculating..." texts
+        updateDistanceText();
+
+        // Trip distance / ETA (pickup → destination) from OSRM
+        if (pickupLat != null && pickupLng != null &&
+                destLat != null && destLng != null) {
+
+            GeoPoint pickupPoint = new GeoPoint(pickupLat, pickupLng);
+            GeoPoint destPoint = new GeoPoint(destLat, destLng);
+            fetchRoute(pickupPoint, destPoint, Color.RED, true); // trip route
         }
     }
 
-    /** UPDATE RIDE INFO UI **/
-    private void updateRideUI() {
-        setStyledText(tvRideType, "Ride Type:", rideType);
-        setStyledText(tvPickup, "Pickup:", pickupName != null ? pickupName : (pickupLat + ", " + pickupLng));
-        setStyledText(tvDestination, "Destination:", dropAddress != null ? dropAddress : (destLat + ", " + destLng));
-        setStyledText(tvPrice, "Price:", price);
+    // -------------------------------------------------------------------------
+    // BUILD DISTANCE / ETA TEXT
+    // -------------------------------------------------------------------------
+    private void updateDistanceText() {
+        if (tvDistance == null || tvDistance.getVisibility() != View.VISIBLE) return;
+
+        String pickupDist = (pickupDistanceStr != null) ? pickupDistanceStr : "calculating...";
+        String pickupEta = (pickupEtaStr != null) ? pickupEtaStr : "calculating...";
+
+        String tripDist = (tripDistanceStr != null) ? tripDistanceStr : "calculating...";
+        String tripEta = (tripEtaStr != null) ? tripEtaStr : "calculating...";
+
+        String text = "📍 Distance to Pickup — " + pickupDist +
+                "\n⏱ ETA to Pickup — " + pickupEta +
+                "\n\n🚗 Trip Distance — " + tripDist +
+                "\n⏱ Trip ETA — " + tripEta;
+
+        tvDistance.setText(text);
     }
 
-    /** LOCATION UPDATES **/
+    // -------------------------------------------------------------------------
+    // LOCATION UPDATES
+    // -------------------------------------------------------------------------
     private void startLocationUpdates() {
-        LocationRequest request = LocationRequest.create()
-                .setInterval(5000)
-                .setFastestInterval(2000)
-                .setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
+        LocationRequest request =
+                LocationRequest.create()
+                        .setInterval(5000)
+                        .setFastestInterval(2000)
+                        .setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
 
         locationCallback = new LocationCallback() {
             @Override
@@ -371,7 +564,7 @@ public class UserRequest_Fragment extends Fragment {
                     double lng = location.getLongitude();
                     float bearing = location.getBearing();
 
-                    // Update Firebase
+                    // Update Firebase driver location
                     driversRef.child("currentLat").setValue(lat);
                     driversRef.child("currentLng").setValue(lng);
 
@@ -380,48 +573,96 @@ public class UserRequest_Fragment extends Fragment {
                         ridesRef.child(currentRideId).child("driverLng").setValue(lng);
                     }
 
-                    updateDistance(lat, lng);
+                    // Always show driver on map
+                    updatePickupDistanceAndEta(lat, lng);
                     driverLocUpdate(new GeoPoint(lat, lng), bearing);
                 }
             }
         };
 
         if (ActivityCompat.checkSelfPermission(requireContext(),
-                Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+                Manifest.permission.ACCESS_FINE_LOCATION)
+                != PackageManager.PERMISSION_GRANTED) {
+
             requestPermissions(new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, 1);
             return;
         }
 
-        fusedLocationClient.requestLocationUpdates(request, locationCallback, Looper.getMainLooper());
+        fusedLocationClient.requestLocationUpdates(
+                request,
+                locationCallback,
+                Looper.getMainLooper()
+        );
     }
 
-    private void updateDistance(double driverLat, double driverLng) {
-        if (pickupLat != null && pickupLng != null) {
-            float[] results = new float[1];
-            Location.distanceBetween(driverLat, driverLng, pickupLat, pickupLng, results);
-            distanceInKm = results[0] / 1000f;
-            tvDistance.setText("Distance to Pickup: " + String.format("%.2f", distanceInKm) + " km");
+    // straight-line distance + ETA driver → pickup
+    private void updatePickupDistanceAndEta(double driverLat, double driverLng) {
+        if (pickupLat == null || pickupLng == null || currentRideId == null) {
+            // no active ride
+            return;
         }
+
+        float[] results = new float[1];
+        Location.distanceBetween(driverLat, driverLng, pickupLat, pickupLng, results);
+        double distanceKm = results[0] / 1000.0;
+
+        pickupDistanceStr = String.format("%.2f km", distanceKm);
+
+        double hours = distanceKm / AVG_SPEED_KMPH;
+        int totalMinutes = (int) Math.round(hours * 60.0);
+        pickupEtaStr = formatMinutes(totalMinutes);
+
+        updateDistanceText();
     }
 
-    /** DRIVER MARKER & ROUTES **/
-    /** DRIVER MARKER & ROUTES **/
-    /** DRIVER MARKER & ROUTES **/
+    // -------------------------------------------------------------------------
+    // DRIVER MARKER & ROUTES
+    // -------------------------------------------------------------------------
     private void driverLocUpdate(@Nullable GeoPoint driverLoc, float bearing) {
         if (osmMap == null) return;
 
-        GeoPoint pickup = pickupLat != null && pickupLng != null ? new GeoPoint(pickupLat, pickupLng) : null;
-        GeoPoint dest = destLat != null && destLng != null ? new GeoPoint(destLat, destLng) : null;
+        GeoPoint pickup = (pickupLat != null && pickupLng != null)
+                ? new GeoPoint(pickupLat, pickupLng) : null;
+        GeoPoint dest = (destLat != null && destLng != null)
+                ? new GeoPoint(destLat, destLng) : null;
 
-        // Add pickup marker
+        // Driver marker
+        if (driverLoc != null) {
+            if (driverMarker == null) {
+                Bitmap originalBitmap = BitmapFactory.decodeResource(
+                        getResources(), R.drawable.driver_image);
+                if (originalBitmap != null) {
+                    Bitmap resizedBitmap = Bitmap.createScaledBitmap(
+                            originalBitmap, 100, 100, false);
+                    driverMarker = new Marker(osmMap);
+                    driverMarker.setPosition(driverLoc);
+                    driverMarker.setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM);
+                    driverMarker.setIcon(new BitmapDrawable(getResources(), resizedBitmap));
+                    driverMarker.setTitle("Driver (You)");
+                    driverMarker.setRotation(bearing);
+                    osmMap.getOverlays().add(driverMarker);
+                } else {
+                    driverMarker = new Marker(osmMap);
+                    driverMarker.setPosition(driverLoc);
+                    driverMarker.setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM);
+                    driverMarker.setTitle("Driver (You)");
+                    driverMarker.setRotation(bearing);
+                    osmMap.getOverlays().add(driverMarker);
+                }
+                osmMap.getController().setZoom(15);
+                osmMap.getController().setCenter(driverLoc);
+            } else {
+                animateMarkerTo(driverMarker, driverLoc, bearing, MARKER_ANIM_DURATION);
+            }
+        }
+
+        // Pickup marker
         if (pickup != null && pickupMarker == null) {
-            // Load and resize pickup image with null check
-            Bitmap originalPickupBitmap = BitmapFactory.decodeResource(getResources(), R.drawable.pickup_location);
+            Bitmap originalPickupBitmap = BitmapFactory.decodeResource(
+                    getResources(), R.drawable.pickup_location);
             if (originalPickupBitmap != null) {
-                int pickupWidth = 100;
-                int pickupHeight = 100;
-                Bitmap resizedPickupBitmap = Bitmap.createScaledBitmap(originalPickupBitmap, pickupWidth, pickupHeight, false);
-
+                Bitmap resizedPickupBitmap =
+                        Bitmap.createScaledBitmap(originalPickupBitmap, 100, 100, false);
                 pickupMarker = new Marker(osmMap);
                 pickupMarker.setPosition(pickup);
                 pickupMarker.setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM);
@@ -429,21 +670,22 @@ public class UserRequest_Fragment extends Fragment {
                 pickupMarker.setTitle("Pickup: " + (pickupName != null ? pickupName : ""));
                 osmMap.getOverlays().add(pickupMarker);
             } else {
-                // Fallback: create marker without custom icon
-                pickupMarker = createMarker(pickup, "Pickup: " + (pickupName != null ? pickupName : ""), R.drawable.pickup_location);
+                pickupMarker = createMarker(
+                        pickup,
+                        "Pickup: " + (pickupName != null ? pickupName : ""),
+                        R.drawable.pickup_location
+                );
                 osmMap.getOverlays().add(pickupMarker);
             }
         }
 
-        // Add destination marker
+        // Destination marker
         if (dest != null && destMarker == null) {
-            // Load and resize destination image with null check
-            Bitmap originalDestBitmap = BitmapFactory.decodeResource(getResources(), R.drawable.drop_location_icon);
+            Bitmap originalDestBitmap = BitmapFactory.decodeResource(
+                    getResources(), R.drawable.drop_location_icon);
             if (originalDestBitmap != null) {
-                int destWidth = 100;
-                int destHeight = 100;
-                Bitmap resizedDestBitmap = Bitmap.createScaledBitmap(originalDestBitmap, destWidth, destHeight, false);
-
+                Bitmap resizedDestBitmap =
+                        Bitmap.createScaledBitmap(originalDestBitmap, 100, 100, false);
                 destMarker = new Marker(osmMap);
                 destMarker.setPosition(dest);
                 destMarker.setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM);
@@ -451,56 +693,23 @@ public class UserRequest_Fragment extends Fragment {
                 destMarker.setTitle("Destination: " + (dropAddress != null ? dropAddress : ""));
                 osmMap.getOverlays().add(destMarker);
             } else {
-                // Fallback: create marker without custom icon
-                destMarker = createMarker(dest, "Destination: " + (dropAddress != null ? dropAddress : ""), R.drawable.drop_location_icon);
+                destMarker = createMarker(
+                        dest,
+                        "Destination: " + (dropAddress != null ? dropAddress : ""),
+                        R.drawable.drop_location_icon
+                );
                 osmMap.getOverlays().add(destMarker);
             }
         }
 
-        // Driver marker with null check
-        if (driverLoc != null) {
-            if (driverMarker == null) {
-                // Load the original driver image with null check
-                Bitmap originalBitmap = BitmapFactory.decodeResource(getResources(), R.drawable.driver_image);
-                if (originalBitmap != null) {
-                    int width = 100;
-                    int height = 100;
-                    Bitmap resizedBitmap = Bitmap.createScaledBitmap(originalBitmap, width, height, false);
-
-                    // Create the marker
-                    driverMarker = new Marker(osmMap);
-                    driverMarker.setPosition(driverLoc);
-                    driverMarker.setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM);
-                    driverMarker.setIcon(new BitmapDrawable(getResources(), resizedBitmap));
-                    driverMarker.setTitle("Driver (You)");
-                    driverMarker.setRotation(bearing);
-
-                    // Add to map
-                    osmMap.getOverlays().add(driverMarker);
-                    osmMap.getController().setZoom(15);
-                    osmMap.getController().setCenter(driverLoc);
-                } else {
-                    // Fallback for driver marker
-                    driverMarker = new Marker(osmMap);
-                    driverMarker.setPosition(driverLoc);
-                    driverMarker.setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM);
-                    driverMarker.setTitle("Driver (You)");
-                    driverMarker.setRotation(bearing);
-                    osmMap.getOverlays().add(driverMarker);
-                    osmMap.getController().setZoom(15);
-                    osmMap.getController().setCenter(driverLoc);
-                }
-            } else {
-                animateMarkerTo(driverMarker, driverLoc, bearing, MARKER_ANIM_DURATION);
+        // Driver → Pickup route (blue), throttled to avoid flicker
+        if (pickup != null && driverLoc != null && currentRideId != null) {
+            long now = System.currentTimeMillis();
+            if (pickupRoute == null || now - lastPickupRouteRequestTime > 20000L) { // 20 sec
+                lastPickupRouteRequestTime = now;
+                fetchRoute(driverLoc, pickup, Color.BLUE, false);
             }
-        } else if (pickup != null) {
-            osmMap.getController().setZoom(15);
-            osmMap.getController().setCenter(pickup);
         }
-
-        // Routes
-        if (pickup != null && dest != null && currentRoute == null) fetchRoute(pickup, dest, Color.RED, true);
-        if (pickup != null && driverLoc != null) fetchRoute(driverLoc, pickup, Color.BLUE, false);
 
         osmMap.invalidate();
     }
@@ -509,17 +718,22 @@ public class UserRequest_Fragment extends Fragment {
         Marker marker = new Marker(osmMap);
         marker.setPosition(point);
         marker.setTitle(title);
-        if (getContext() != null)
+        if (getContext() != null) {
             marker.setIcon(ContextCompat.getDrawable(requireContext(), iconRes));
+        }
         marker.setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM);
         return marker;
     }
 
-    private void fetchRoute(GeoPoint start, GeoPoint end, int color, boolean isCurrentRoute) {
-        requireActivity().runOnUiThread(() -> {
-            progressBar.setVisibility(View.VISIBLE);
-            dimOverlay.setVisibility(View.VISIBLE);
-        });
+    // -------------------------------------------------------------------------
+    // OSRM ROUTE FETCH
+    // -------------------------------------------------------------------------
+    private void fetchRoute(GeoPoint start,
+                            GeoPoint end,
+                            int color,
+                            boolean isTripRoute) {
+
+        if (getActivity() == null) return;
 
         String url = "https://router.project-osrm.org/route/v1/driving/"
                 + start.getLongitude() + "," + start.getLatitude() + ";"
@@ -531,57 +745,112 @@ public class UserRequest_Fragment extends Fragment {
         httpClient.newCall(request).enqueue(new okhttp3.Callback() {
             @Override
             public void onFailure(@NonNull Call call, @NonNull IOException e) {
-                requireActivity().runOnUiThread(() -> {
-                    progressBar.setVisibility(View.GONE);
-                    dimOverlay.setVisibility(View.GONE);
-                    Toast.makeText(getContext(), "Route fetch failed", Toast.LENGTH_SHORT).show();
-                });
+                if (getActivity() == null) return;
+                requireActivity().runOnUiThread(() ->
+                        Toast.makeText(getContext(),
+                                "Route fetch failed",
+                                Toast.LENGTH_SHORT).show()
+                );
             }
 
             @Override
-            public void onResponse(@NonNull Call call, @NonNull Response response) throws IOException {
-                if (!response.isSuccessful()) return;
+            public void onResponse(@NonNull Call call,
+                                   @NonNull Response response) throws IOException {
+                if (!response.isSuccessful() || getActivity() == null) return;
 
                 try {
                     String res = response.body().string();
                     JSONObject json = new JSONObject(res);
-                    JSONArray coords = json.getJSONArray("routes")
-                            .getJSONObject(0)
+                    JSONObject routeObj =
+                            json.getJSONArray("routes").getJSONObject(0);
+
+                    double distanceMeters = routeObj.optDouble("distance", 0);
+                    double durationSeconds = routeObj.optDouble("duration", 0);
+
+                    JSONArray coords = routeObj
                             .getJSONObject("geometry")
                             .getJSONArray("coordinates");
 
                     Polyline routeLine = new Polyline();
                     for (int i = 0; i < coords.length(); i++) {
                         JSONArray point = coords.getJSONArray(i);
-                        routeLine.addPoint(new GeoPoint(point.getDouble(1), point.getDouble(0)));
+                        routeLine.addPoint(
+                                new GeoPoint(point.getDouble(1),
+                                        point.getDouble(0)));
                     }
                     routeLine.setColor(color);
                     routeLine.setWidth(color == Color.RED ? 8f : 6f);
 
                     requireActivity().runOnUiThread(() -> {
-                        if (isCurrentRoute && currentRoute != null) osmMap.getOverlays().remove(currentRoute);
-                        if (!isCurrentRoute && pickupRoute != null) osmMap.getOverlays().remove(pickupRoute);
-
-                        if (isCurrentRoute) currentRoute = routeLine;
-                        else pickupRoute = routeLine;
+                        if (isTripRoute) {
+                            if (currentRoute != null)
+                                osmMap.getOverlays().remove(currentRoute);
+                            currentRoute = routeLine;
+                        } else {
+                            if (pickupRoute != null)
+                                osmMap.getOverlays().remove(pickupRoute);
+                            pickupRoute = routeLine;
+                        }
 
                         osmMap.getOverlays().add(routeLine);
                         osmMap.invalidate();
 
-
-                        // hide progress & dim overlay smoothly
-                        progressBar.setVisibility(View.GONE);
-                        hideDimOverlay();  // fade-out
-
+                        if (isTripRoute) {
+                            updateTripDistanceAndEtaFromRoute(
+                                    distanceMeters,
+                                    durationSeconds
+                            );
+                        }
                     });
-                } catch (Exception e) { e.printStackTrace(); }
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
             }
         });
     }
 
+    // -------------------------------------------------------------------------
+    // Trip distance + ETA from OSRM (pickup -> dest)
+    // -------------------------------------------------------------------------
+    private void updateTripDistanceAndEtaFromRoute(double distanceMeters,
+                                                   double durationSeconds) {
+        if (distanceMeters <= 0 || durationSeconds <= 0) return;
 
-    /** ANIMATE DRIVER MARKER **/
-    private void animateMarkerTo(Marker marker, GeoPoint toPosition, float toRotation, long duration) {
+        double km = distanceMeters / 1000.0;
+        String etaStr = formatDuration(durationSeconds);
+
+        tripDistanceStr = String.format("%.2f km", km);
+        tripEtaStr = etaStr;
+
+        updateDistanceText();
+    }
+
+    private String formatDuration(double durationSeconds) {
+        if (durationSeconds <= 0) return "N/A";
+        int totalMinutes = (int) Math.round(durationSeconds / 60.0);
+        return formatMinutes(totalMinutes);
+    }
+
+    private String formatMinutes(int totalMinutes) {
+        if (totalMinutes <= 0) return "N/A";
+        if (totalMinutes < 60) {
+            return totalMinutes + " min";
+        } else {
+            int hours = totalMinutes / 60;
+            int mins = totalMinutes % 60;
+            if (mins == 0) return hours + " hr";
+            return hours + " hr " + mins + " min";
+        }
+    }
+
+    // -------------------------------------------------------------------------
+    // MARKER ANIMATION
+    // -------------------------------------------------------------------------
+    private void animateMarkerTo(Marker marker,
+                                 GeoPoint toPosition,
+                                 float toRotation,
+                                 long duration) {
+
         GeoPoint startPosition = marker.getPosition();
         float startRotation = marker.getRotation();
 
@@ -590,8 +859,10 @@ public class UserRequest_Fragment extends Fragment {
         animator.setInterpolator(new LinearInterpolator());
         animator.addUpdateListener(animation -> {
             float t = animation.getAnimatedFraction();
-            double lat = startPosition.getLatitude() + (toPosition.getLatitude() - startPosition.getLatitude()) * t;
-            double lon = startPosition.getLongitude() + (toPosition.getLongitude() - startPosition.getLongitude()) * t;
+            double lat = startPosition.getLatitude() +
+                    (toPosition.getLatitude() - startPosition.getLatitude()) * t;
+            double lon = startPosition.getLongitude() +
+                    (toPosition.getLongitude() - startPosition.getLongitude()) * t;
             marker.setPosition(new GeoPoint(lat, lon));
 
             float rot = interpolateRotation(startRotation, toRotation, t);
@@ -603,26 +874,27 @@ public class UserRequest_Fragment extends Fragment {
     }
 
     private float interpolateRotation(float start, float end, float fraction) {
-        // Calculate the shortest path for rotation
         float normalizedEnd = end % 360;
         float normalizedStart = start % 360;
 
         float diff = normalizedEnd - normalizedStart;
 
-        // Take the shortest path (-180 to 180 degrees)
-        if (diff > 180) {
-            diff -= 360;
-        } else if (diff < -180) {
-            diff += 360;
-        }
+        if (diff > 180) diff -= 360;
+        else if (diff < -180) diff += 360;
 
         return normalizedStart + (diff * fraction);
     }
 
+    // -------------------------------------------------------------------------
+    // MISC
+    // -------------------------------------------------------------------------
     private void setStyledText(TextView tv, String label, String value) {
         if (value == null) value = "N/A";
         SpannableString ss = new SpannableString(label + " " + value);
-        ss.setSpan(new StyleSpan(Typeface.BOLD), 0, label.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        ss.setSpan(new StyleSpan(Typeface.BOLD),
+                0,
+                label.length(),
+                Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
         tv.setText(ss);
     }
 
@@ -640,26 +912,4 @@ public class UserRequest_Fragment extends Fragment {
             fusedLocationClient.removeLocationUpdates(locationCallback);
         }
     }
-
-
-    private void showDimOverlay() {
-        if (dimOverlay == null) return;
-        dimOverlay.setVisibility(View.VISIBLE);
-        dimOverlay.setAlpha(0f);
-        dimOverlay.animate()
-                .alpha(1f)
-                .setDuration(300) // 300ms fade-in
-                .start();
-    }
-
-    private void hideDimOverlay() {
-        if (dimOverlay == null) return;
-        dimOverlay.animate()
-                .alpha(0f)
-                .setDuration(300) // 300ms fade-out
-                .withEndAction(() -> dimOverlay.setVisibility(View.GONE))
-                .start();
-    }
-
-
 }
