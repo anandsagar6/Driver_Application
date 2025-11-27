@@ -1,0 +1,180 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:fillViewport="true"
+    android:background="@color/white"
+    android:fitsSystemWindows="true"
+    tools:context=".PhotosActivity">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="16dp">
+
+        <!-- Top Title -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Upload Required Documents"
+            android:textSize="24sp"
+            android:textStyle="bold"
+            android:gravity="center"
+            android:textColor="@color/text"
+            android:layout_marginBottom="20dp"
+            android:fontFamily="@font/amaranth"/>
+
+        <!-- Profile Photo -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Profile Photo"
+            android:textStyle="bold"
+            android:textColor="@color/text"
+            android:textSize="16sp"
+            android:layout_marginBottom="6dp" />
+
+        <FrameLayout
+            android:layout_width="120dp"
+            android:layout_height="120dp"
+            android:layout_gravity="center"
+            android:layout_marginBottom="15dp">
+
+            <de.hdodenhof.circleimageview.CircleImageView
+                android:id="@+id/profileImage"
+                android:layout_width="120dp"
+                android:layout_height="120dp"
+                android:src="@drawable/user"
+                app:civ_border_width="3dp"
+                app:civ_border_color="@color/lavender"/>
+
+            <com.google.android.material.floatingactionbutton.FloatingActionButton
+                android:id="@+id/imgProfile"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:layout_gravity="bottom|end"
+                android:layout_margin="6dp"
+                app:backgroundTint="@color/lavender"
+                app:srcCompat="@drawable/upload"
+                app:tint="@android:color/white" />
+
+        </FrameLayout>
+
+        <!-- Driving License Front -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Driving License (Front)"
+            android:textStyle="bold"
+            android:textColor="@color/text"
+            android:textSize="15sp"
+            android:layout_marginTop="10dp"
+            android:layout_marginBottom="6dp" />
+
+        <ImageView
+            android:id="@+id/imgDLFront"
+            android:layout_width="match_parent"
+            android:layout_height="140dp"
+            android:background="@drawable/upload_box"
+            android:padding="30dp"
+            android:scaleType="centerInside"
+            android:src="@drawable/upload"
+            android:layout_marginBottom="16dp" />
+
+        <!-- Driving License Back -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Driving License (Back)"
+            android:textStyle="bold"
+            android:textColor="@color/text"
+            android:textSize="15sp"
+            android:layout_marginBottom="6dp" />
+
+        <ImageView
+            android:id="@+id/imgDLBack"
+            android:layout_width="match_parent"
+            android:layout_height="140dp"
+            android:background="@drawable/upload_box"
+            android:padding="30dp"
+            android:scaleType="centerInside"
+            android:src="@drawable/upload"
+            android:layout_marginBottom="16dp" />
+
+        <!-- Aadhar Front -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Aadhar Card (Front)"
+            android:textStyle="bold"
+            android:textColor="@color/text"
+            android:textSize="15sp"
+            android:layout_marginBottom="6dp" />
+
+        <ImageView
+            android:id="@+id/imgAadharFront"
+            android:layout_width="match_parent"
+            android:layout_height="140dp"
+            android:background="@drawable/upload_box"
+            android:padding="30dp"
+            android:scaleType="centerInside"
+            android:src="@drawable/upload"
+            android:layout_marginBottom="16dp" />
+
+        <!-- Aadhar Back -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Aadhar Card (Back)"
+            android:textStyle="bold"
+            android:textColor="@color/text"
+            android:textSize="15sp"
+            android:layout_marginBottom="6dp" />
+
+        <ImageView
+            android:id="@+id/imgAadharBack"
+            android:layout_width="match_parent"
+            android:layout_height="140dp"
+            android:background="@drawable/upload_box"
+            android:padding="30dp"
+            android:scaleType="centerInside"
+            android:src="@drawable/upload"
+            android:layout_marginBottom="16dp" />
+
+        <!-- Vehicle Photo -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Vehicle Photo"
+            android:textStyle="bold"
+            android:textColor="@color/text"
+            android:textSize="15sp"
+            android:layout_marginBottom="6dp" />
+
+        <ImageView
+            android:id="@+id/imgVehicle"
+            android:layout_width="match_parent"
+            android:layout_height="140dp"
+            android:background="@drawable/upload_box"
+            android:padding="30dp"
+            android:scaleType="centerInside"
+            android:src="@drawable/upload"
+            android:layout_marginBottom="25dp" />
+
+        <!-- Button -->
+        <Button
+            android:id="@+id/btnSubmit"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Submit"
+            android:textStyle="bold"
+            android:textColor="@color/white"
+            android:background="@drawable/btn_bg"
+            android:padding="14dp"
+            android:layout_marginBottom="20dp"/>
+
+    </LinearLayout>
+</ScrollView>

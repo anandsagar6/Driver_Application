@@ -129,17 +129,10 @@
                 android:padding="12dp"
                 android:layout_marginTop="10dp"/>
 
-            <!-- Driving License -->
-            <EditText
-                android:id="@+id/dlNumberInput"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:hint="Driving License Number"
-                android:textColor="@color/black"
-                android:textColorHint="@color/colorTextsecond"
-                android:background="@drawable/bg_edittex"
-                android:padding="12dp"
-                android:layout_marginTop="10dp"/>
+
+
+
+
 
 
 

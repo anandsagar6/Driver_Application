@@ -18,15 +18,14 @@ import com.google.firebase.database.FirebaseDatabase;
 @SuppressLint("CustomSplashScreen")
 public class SplashActivity extends AppCompatActivity {
 
-    private static final int SPLASH_TIME = 2500; // Minimum splash duration in ms
-    private static final int ANIMATION_DURATION = 1000; // Animation duration
+    private static final int SPLASH_TIME = 2500;
+    private static final int ANIMATION_DURATION = 1000;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_splash);
 
-        // Animate tagline immediately
         TextView tagline = findViewById(R.id.tagline);
         Animation fadeIn = AnimationUtils.loadAnimation(this, R.anim.fade_animation_for_tagline);
         fadeIn.setDuration(ANIMATION_DURATION);
@@ -37,65 +36,69 @@ public class SplashActivity extends AppCompatActivity {
 
         long startTime = System.currentTimeMillis();
 
-        // Wait for animation to complete before checking Firebase
         new Handler().postDelayed(() -> {
             if (currentUser != null) {
-                checkUserRegistration(startTime);
+                checkUserStatus(startTime);
             } else {
-                handleNoUser(startTime);
+                goWithDelay(Login_Activity.class, startTime);
             }
         }, ANIMATION_DURATION);
     }
 
-    private void checkUserRegistration(long startTime) {
+    private void checkUserStatus(long startTime) {
         String uid = FirebaseAuth.getInstance().getCurrentUser().getUid();
         DatabaseReference driverRef = FirebaseDatabase.getInstance().getReference("drivers").child(uid).child("info");
 
-        driverRef.child("isRegistered").get().addOnCompleteListener(task -> {
+        driverRef.get().addOnSuccessListener(snapshot -> {
+
+            boolean imagesUploaded = false;
+            boolean isRegistered = false;
+
+            if (snapshot.child("image_uploaded").exists())
+                imagesUploaded = snapshot.child("image_uploaded").getValue(Boolean.class);
+
+            if (snapshot.child("isRegistered").exists())
+                isRegistered = snapshot.child("isRegistered").getValue(Boolean.class);
+
             long elapsedTime = System.currentTimeMillis() - startTime;
             long remainingTime = SPLASH_TIME - elapsedTime;
 
-            Runnable goNext = () -> {
-                if (task.isSuccessful()) {
-                    Boolean isRegistered = task.getResult().getValue(Boolean.class);
-                    if (isRegistered != null && isRegistered) {
-                        goToActivityWithAnimation(DashBoard.class);
-                    } else {
-                        goToActivityWithAnimation(RegistrationActivity.class);
-                    }
-                } else {
-                    goToActivityWithAnimation(RegistrationActivity.class);
-                }
-            };
+            Runnable nextAction;
+
+            if (!imagesUploaded) {
+                nextAction = () -> goToActivityWithAnimation(PhotosActivity.class);
+            } else if (!isRegistered) {
+                nextAction = () -> goToActivityWithAnimation(RegistrationActivity.class);
+            } else {
+                nextAction = () -> goToActivityWithAnimation(DashBoard.class);
+            }
 
             if (remainingTime > 0) {
-                new Handler().postDelayed(goNext, remainingTime);
+                new Handler().postDelayed(nextAction, remainingTime);
             } else {
-                goNext.run();
+                nextAction.run();
             }
-        });
+
+        }).addOnFailureListener(e -> goWithDelay(Login_Activity.class, startTime));
     }
 
-    private void handleNoUser(long startTime) {
+    private void goWithDelay(Class<?> cls, long startTime) {
         long elapsedTime = System.currentTimeMillis() - startTime;
         long remainingTime = SPLASH_TIME - elapsedTime;
 
         if (remainingTime > 0) {
-            new Handler().postDelayed(() ->
-                    goToActivityWithAnimation(Login_Activity.class), remainingTime);
+            new Handler().postDelayed(() -> goToActivityWithAnimation(cls), remainingTime);
         } else {
-            goToActivityWithAnimation(Login_Activity.class);
+            goToActivityWithAnimation(cls);
         }
     }
 
     private void goToActivityWithAnimation(Class<?> cls) {
-        // Create a fade-out animation for smooth transition
         findViewById(android.R.id.content).animate()
                 .alpha(0f)
                 .setDuration(500)
                 .withEndAction(() -> {
-                    Intent intent = new Intent(SplashActivity.this, cls);
-                    startActivity(intent);
+                    startActivity(new Intent(SplashActivity.this, cls));
                     overridePendingTransition(R.anim.zoom_in, R.anim.zoom_out);
                     finish();
                 })

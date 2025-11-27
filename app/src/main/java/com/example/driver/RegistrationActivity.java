@@ -37,7 +37,7 @@ import java.util.HashMap;
 public class RegistrationActivity extends AppCompatActivity {
 
     private Spinner vehicleTypeSpinner, vehicleEmissionSpinner;
-    private EditText vehicleModelInput, vehicleColorInput, vehicleNumberInput, dlNumberInput;
+    private EditText vehicleModelInput, vehicleColorInput, vehicleNumberInput;
     private Button registerBtn;
     private ImageView bannerImage, genderImage;
     private TextView tvGreeting;
@@ -97,7 +97,6 @@ public class RegistrationActivity extends AppCompatActivity {
         vehicleModelInput = findViewById(R.id.vehicleModelInput);
         vehicleColorInput = findViewById(R.id.vehicleColorInput);
         vehicleNumberInput = findViewById(R.id.vehicleNumberInput);
-        dlNumberInput = findViewById(R.id.dlNumberInput);
         registerBtn = findViewById(R.id.registerBtn);
         tvGreeting = findViewById(R.id.tvGreeting);
     }
@@ -202,7 +201,7 @@ public class RegistrationActivity extends AppCompatActivity {
         String vehicleModel = vehicleModelInput.getText().toString().trim();
         String vehicleColor = vehicleColorInput.getText().toString().trim();
         String vehicleNumber = vehicleNumberInput.getText().toString().trim();
-        String dlNumber = dlNumberInput.getText().toString().trim();
+
 
         // Show loading state
         registerBtn.setEnabled(false);
@@ -214,7 +213,7 @@ public class RegistrationActivity extends AppCompatActivity {
         vehicleInfo.put("vehicleColor", vehicleColor);
         vehicleInfo.put("vehicleNumber", vehicleNumber);
         vehicleInfo.put("emissionStandard", emissionStandard);
-        vehicleInfo.put("dlNumber", dlNumber);
+
         vehicleInfo.put("isRegistered", true);
 
         driverRef.child(uid).child("info").updateChildren(vehicleInfo)
@@ -272,10 +271,7 @@ public class RegistrationActivity extends AppCompatActivity {
             vehicleNumberInput.setError("Enter vehicle number");
             return false;
         }
-        if (TextUtils.isEmpty(dlNumberInput.getText().toString().trim())) {
-            dlNumberInput.setError("Enter DL number");
-            return false;
-        }
+
 
         return true;
     }
