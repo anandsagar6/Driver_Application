@@ -13,6 +13,9 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 
+import com.bumptech.glide.Glide;
+import com.bumptech.glide.load.resource.bitmap.RoundedCorners;
+import com.bumptech.glide.request.RequestOptions;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
@@ -46,7 +49,7 @@ public class ProfileFragment extends Fragment {
         // UI
         tvName = view.findViewById(R.id.profileName);
         tvEmail = view.findViewById(R.id.profileEmail);
-        ivProfileImage = view.findViewById(R.id.profileimage); // ImageView in XML
+        ivProfileImage = view.findViewById(R.id.profileimage);
         deleteAccount = view.findViewById(R.id.deleteAccount);
         btnLogout = view.findViewById(R.id.logoutBtn);
         about_us = view.findViewById(R.id.About_us);
@@ -97,35 +100,41 @@ public class ProfileFragment extends Fragment {
         driverRef.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
-                if (snapshot.exists()) {
-                    String firstName = snapshot.child("firstName").getValue(String.class);
-                    String email = snapshot.child("email").getValue(String.class);
-                    String gender = snapshot.child("gender").getValue(String.class);
+                if (!snapshot.exists()) return;
 
-                    tvName.setText(firstName != null ? firstName : "No Name");
-                    tvEmail.setText(email != null ? email : "No Email");
+                String name = snapshot.child("firstName").getValue(String.class);
+                String email = snapshot.child("email").getValue(String.class);
 
-                    // Set profile image based on gender
-                    if (gender != null) {
-                        if (gender.equalsIgnoreCase("Male")) {
-                            ivProfileImage.setImageResource(R.drawable.male);
-                        } else if (gender.equalsIgnoreCase("Female")) {
-                            ivProfileImage.setImageResource(R.drawable.female);
-                        } else {
-                            ivProfileImage.setImageResource(R.drawable.user); // fallback
-                        }
-                    } else {
-                        ivProfileImage.setImageResource(R.drawable.user);
-                    }
+                // AWS URL saved in Firebase
+                String profileUrl = snapshot.child("documents").child("PROFILE").getValue(String.class);
+
+                tvName.setText(name != null ? name : "User");
+                tvEmail.setText(email != null ? email : "No Email");
+
+                // ---- 🔥 Rounded Image Loading (only change here) ----
+                RequestOptions requestOptions = new RequestOptions()
+                        .transform(new RoundedCorners(40))
+                        .placeholder(R.drawable.user)
+                        .error(R.drawable.user);
+
+                if (profileUrl != null && !profileUrl.isEmpty()) {
+
+                    Glide.with(requireContext())
+                            .load(profileUrl)
+                            .apply(requestOptions)
+                            .into(ivProfileImage);
+
+                } else {
+                    Glide.with(requireContext())
+                            .load(R.drawable.user)
+                            .apply(requestOptions)
+                            .into(ivProfileImage);
                 }
+                // ------------------------------------------------------
             }
 
             @Override
-            public void onCancelled(@NonNull DatabaseError error) {
-                tvName.setText("Error");
-                tvEmail.setText(error.getMessage());
-                ivProfileImage.setImageResource(R.drawable.user);
-            }
+            public void onCancelled(@NonNull DatabaseError error) {}
         });
     }
 }

@@ -3,6 +3,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:background="@drawable/background_1"
     tools:context=".ProfileFragment">
 
@@ -26,14 +27,18 @@
                 android:src="@drawable/top_background" />
 
             <!-- Profile Image -->
-            <ImageView
+            <com.makeramen.roundedimageview.RoundedImageView
                 android:id="@+id/profileimage"
-                android:layout_width="130dp"
-                android:layout_height="120dp"
+                android:layout_width="140dp"
+                android:layout_height="140dp"
                 android:layout_marginTop="-60dp"
                 android:scaleType="centerCrop"
-                android:background="@drawable/profile_bg"
-              />
+                app:riv_corner_radius="25dp"
+                app:riv_border_color="@color/text"
+                app:riv_border_width="3dp"
+                app:riv_oval="false"/>
+
+
 
             <!-- Name -->
             <TextView
