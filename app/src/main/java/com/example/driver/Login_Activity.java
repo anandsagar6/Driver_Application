@@ -183,41 +183,50 @@ public class Login_Activity extends AppCompatActivity {
     private void checkUserRegistrationStatus(FirebaseUser user) {
         String uid = user.getUid();
 
-        // Keep button in loading state while checking registration
-        loginBtn.setEnabled(false);
-        loginBtn.setText("Checking registration...");
-
-        driverRef.child(uid).child("info").child("isRegistered")
+        driverRef.child(uid).child("info")
                 .addListenerForSingleValueEvent(new ValueEventListener() {
                     @Override
                     public void onDataChange(DataSnapshot snapshot) {
-                        // Reset button state
-                        loginBtn.setEnabled(true);
-                        loginBtn.setText("LOGIN");
 
-                        if (snapshot.exists() && Boolean.TRUE.equals(snapshot.getValue(Boolean.class))) {
-                            // User is registered, go to dashboard
-                            Toast.makeText(Login_Activity.this, "Login Successful ✅", Toast.LENGTH_SHORT).show();
-                            navigateToDashboard();
-                        } else {
-                            // User is not registered, go to registration
-                            Toast.makeText(Login_Activity.this, "Login Successful ✅\nPlease complete vehicle registration", Toast.LENGTH_LONG).show();
-                            navigateToRegistration();
+                        Boolean imageUploaded = snapshot.child("image_uploaded").getValue(Boolean.class);
+                        Boolean isRegistered = snapshot.child("isRegistered").getValue(Boolean.class);
+
+                        if (imageUploaded == null) imageUploaded = false;
+                        if (isRegistered == null) isRegistered = false;
+
+                        if (!imageUploaded) {
+                            // First task → upload photos
+                            Toast.makeText(Login_Activity.this, "Please upload documents", Toast.LENGTH_LONG).show();
+                            navigateTo(PhotosActivity.class);
+                        }
+                        else if (!isRegistered) {
+                            // Next step → fill vehicle details
+                            Toast.makeText(Login_Activity.this, "Please complete registration", Toast.LENGTH_LONG).show();
+                            navigateTo(RegistrationActivity.class);
+                        }
+                        else {
+                            // Completed → Dashboard
+                            Toast.makeText(Login_Activity.this, "Login Successful!", Toast.LENGTH_SHORT).show();
+                            navigateTo(DashBoard.class);
                         }
                     }
 
                     @Override
                     public void onCancelled(DatabaseError error) {
-                        // Reset button state
+                        Toast.makeText(Login_Activity.this, "Error checking status", Toast.LENGTH_SHORT).show();
                         loginBtn.setEnabled(true);
                         loginBtn.setText("LOGIN");
-
-                        // On error, assume user needs registration for safety
-                        Toast.makeText(Login_Activity.this, "Login Successful ✅\nPlease complete vehicle registration", Toast.LENGTH_LONG).show();
-                        navigateToRegistration();
                     }
                 });
     }
+
+    private void navigateTo(Class<?> activity) {
+        Intent intent = new Intent(Login_Activity.this, activity);
+        intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
+        startActivity(intent);
+        finish();
+    }
+
 
     private void navigateToDashboard() {
         Intent intent = new Intent(Login_Activity.this, DashBoard.class);
